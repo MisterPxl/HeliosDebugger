@@ -26,6 +26,13 @@ namespace HeliosDebugger
         public static void RegisterTab(IHeliosTab tab) => Service.RegisterTab(tab);
         public static void RegisterAction(HeliosActionDefinition action) => Service.RegisterAction(action);
         public static void RegisterOptions(object instance) => Service.Options.RegisterInstance(instance);
+        public static bool UnregisterOptions(object instance) => Service.Options.UnregisterInstance(instance);
+        public static void AddOptionContainer(IHeliosOptionContainer container) => Service.AddOptionContainer(container);
+        public static bool RemoveOptionContainer(IHeliosOptionContainer container) => Service.RemoveOptionContainer(container);
+        public static void AddOption(IHeliosValueOption option) => Service.AddOption(option);
+        public static void AddOption(IHeliosActionOption action) => Service.AddOption(action);
+        public static bool RemoveOption(IHeliosValueOption option) => Service.RemoveOption(option);
+        public static bool RemoveOption(IHeliosActionOption action) => Service.RemoveOption(action);
         public static void RegisterSystemInfoProvider(IHeliosSystemInfoProvider provider) => Service.SystemInfo.RegisterProvider(provider);
         public static void RegisterReportTransport(IHeliosReportTransport transport) => Service.Reporting.RegisterTransport(transport);
         public static void AddReportAttachment(HeliosReportAttachment attachment) => Service.Reporting.AddAttachment(attachment);
@@ -135,6 +142,36 @@ namespace HeliosDebugger
             ActionsChanged?.Invoke();
         }
 
+        public void AddOptionContainer(IHeliosOptionContainer container)
+        {
+            Options.RegisterOptionContainer(container);
+        }
+
+        public bool RemoveOptionContainer(IHeliosOptionContainer container)
+        {
+            return Options.UnregisterOptionContainer(container);
+        }
+
+        public void AddOption(IHeliosValueOption option)
+        {
+            Options.AddOption(option);
+        }
+
+        public void AddOption(IHeliosActionOption action)
+        {
+            Options.AddOption(action);
+        }
+
+        public bool RemoveOption(IHeliosValueOption option)
+        {
+            return Options.RemoveOption(option);
+        }
+
+        public bool RemoveOption(IHeliosActionOption action)
+        {
+            return Options.RemoveOption(action);
+        }
+
         public void Show()
         {
             IsVisible = true;
@@ -164,6 +201,9 @@ namespace HeliosDebugger
                     continue;
 
                 ActiveTab = tab;
+                IHeliosTabOpenHandler openHandler = tab as IHeliosTabOpenHandler;
+                if (openHandler != null)
+                    openHandler.OnOpened();
                 TabsChanged?.Invoke();
                 Show();
                 return;
@@ -177,6 +217,7 @@ namespace HeliosDebugger
 
         public void Dispose()
         {
+            Options.Dispose();
             Logs.Dispose();
             Profiler.Dispose();
         }
@@ -221,6 +262,11 @@ namespace HeliosDebugger
         void Dispose();
     }
 
+    public interface IHeliosTabOpenHandler
+    {
+        void OnOpened();
+    }
+
     public abstract class HeliosTabBase : IHeliosTab
     {
         protected HeliosContext Context { get; private set; }
@@ -254,15 +300,18 @@ namespace HeliosDebugger
         protected abstract void BuildContent(HeliosWidgetFactory widgets, Transform parent);
     }
 
-    public sealed class HeliosActionDefinition
+    public sealed class HeliosActionDefinition : IHeliosActionOption
     {
+        private static readonly HeliosActionParameter[] NoParameters = new HeliosActionParameter[0];
+
         public HeliosActionDefinition(
             string id,
             string displayName,
             string category,
             string description,
             int order,
-            Action execute)
+            Action execute,
+            bool pin = false)
         {
             Id = id;
             DisplayName = displayName;
@@ -270,6 +319,7 @@ namespace HeliosDebugger
             Description = description;
             Order = order;
             Execute = execute;
+            Pin = pin;
         }
 
         public string Id { get; }
@@ -277,7 +327,9 @@ namespace HeliosDebugger
         public string Category { get; }
         public string Description { get; }
         public int Order { get; }
+        public bool Pin { get; }
         public Action Execute { get; }
+        public IReadOnlyList<HeliosActionParameter> Parameters => NoParameters;
 
         public HeliosActionResult Invoke()
         {
@@ -290,6 +342,11 @@ namespace HeliosDebugger
             {
                 return HeliosActionResult.Fail(ex.Message, ex);
             }
+        }
+
+        public HeliosActionResult Invoke(IReadOnlyList<string> parameterValues)
+        {
+            return Invoke();
         }
     }
 

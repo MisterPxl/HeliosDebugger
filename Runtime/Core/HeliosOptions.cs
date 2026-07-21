@@ -20,14 +20,30 @@ namespace HeliosDebugger
         Color
     }
 
-    public sealed class HeliosOptionsRegistry
+    public sealed class HeliosOptionsRegistry : IDisposable
     {
         private readonly List<object> _instances = new List<object>();
-        private readonly List<HeliosOptionMember> _options = new List<HeliosOptionMember>();
-        private readonly List<HeliosReflectedAction> _actions = new List<HeliosReflectedAction>();
+        private readonly List<HeliosOptionMember> _reflectedOptions = new List<HeliosOptionMember>();
+        private readonly List<HeliosReflectedAction> _reflectedActions = new List<HeliosReflectedAction>();
+        private readonly List<IHeliosValueOption> _options = new List<IHeliosValueOption>();
+        private readonly List<IHeliosActionOption> _actions = new List<IHeliosActionOption>();
+        private readonly List<ContainerRegistration> _containers = new List<ContainerRegistration>();
+        private HeliosDynamicOptionContainer _directContainer;
         private bool _scanned;
+        private int _revision;
 
-        public IReadOnlyList<HeliosOptionMember> Options
+        public event Action Changed;
+
+        public int Revision
+        {
+            get
+            {
+                EnsureScanned();
+                return _revision;
+            }
+        }
+
+        public IReadOnlyList<IHeliosValueOption> Options
         {
             get
             {
@@ -36,7 +52,7 @@ namespace HeliosDebugger
             }
         }
 
-        public IReadOnlyList<HeliosReflectedAction> Actions
+        public IReadOnlyList<IHeliosActionOption> Actions
         {
             get
             {
@@ -52,12 +68,93 @@ namespace HeliosDebugger
 
             _instances.Add(instance);
             _scanned = false;
+            MarkChanged();
+        }
+
+        public bool UnregisterInstance(object instance)
+        {
+            if (instance == null || !_instances.Remove(instance))
+                return false;
+
+            _scanned = false;
+            MarkChanged();
+            return true;
+        }
+
+        public void RegisterOptionContainer(IHeliosOptionContainer container)
+        {
+            if (container == null || FindContainer(container) != null)
+                return;
+
+            ContainerRegistration registration = new ContainerRegistration(container);
+            _containers.Add(registration);
+            ImportContainer(registration);
+            if (container.IsDynamic)
+                Subscribe(registration);
+
+            RebuildSnapshots();
+            MarkChanged();
+        }
+
+        public bool UnregisterOptionContainer(IHeliosOptionContainer container)
+        {
+            ContainerRegistration registration = FindContainer(container);
+            if (registration == null)
+                return false;
+
+            Unsubscribe(registration);
+            _containers.Remove(registration);
+            RebuildSnapshots();
+            MarkChanged();
+            return true;
+        }
+
+        public void AddOption(IHeliosValueOption option)
+        {
+            if (option == null)
+                return;
+
+            EnsureDirectContainer().AddOption(option);
+        }
+
+        public bool RemoveOption(IHeliosValueOption option)
+        {
+            return _directContainer != null && _directContainer.RemoveOption(option);
+        }
+
+        public void AddOption(IHeliosActionOption action)
+        {
+            if (action == null)
+                return;
+
+            EnsureDirectContainer().AddAction(action);
+        }
+
+        public bool RemoveOption(IHeliosActionOption action)
+        {
+            return _directContainer != null && _directContainer.RemoveAction(action);
         }
 
         public void Refresh()
         {
             _scanned = false;
             EnsureScanned();
+            MarkChanged();
+        }
+
+        public void Dispose()
+        {
+            for (int i = 0; i < _containers.Count; i++)
+                Unsubscribe(_containers[i]);
+
+            _containers.Clear();
+            _instances.Clear();
+            _reflectedOptions.Clear();
+            _reflectedActions.Clear();
+            _options.Clear();
+            _actions.Clear();
+            _directContainer = null;
+            _scanned = false;
         }
 
         private void EnsureScanned()
@@ -65,8 +162,8 @@ namespace HeliosDebugger
             if (_scanned)
                 return;
 
-            _options.Clear();
-            _actions.Clear();
+            _reflectedOptions.Clear();
+            _reflectedActions.Clear();
 
             Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
             for (int assemblyIndex = 0; assemblyIndex < assemblies.Length; assemblyIndex++)
@@ -94,15 +191,9 @@ namespace HeliosDebugger
                 ScanType(type, instance, optionsAttribute);
             }
 
-            _options.Sort((left, right) => left.Order != right.Order
-                ? left.Order.CompareTo(right.Order)
-                : string.Compare(left.DisplayName, right.DisplayName, StringComparison.Ordinal));
-            _actions.Sort((left, right) => left.Order != right.Order
-                ? left.Order.CompareTo(right.Order)
-                : string.Compare(left.DisplayName, right.DisplayName, StringComparison.Ordinal));
-
             ApplyPersistedValues();
             _scanned = true;
+            RebuildSnapshots();
         }
 
         private void ScanType(Type type, object instance, HeliosOptionsAttribute typeAttribute)
@@ -121,7 +212,7 @@ namespace HeliosDebugger
                 if (!field.IsStatic && target == null)
                     continue;
 
-                _options.Add(HeliosOptionMember.FromField(type, target, field, attribute, typeAttribute));
+                _reflectedOptions.Add(HeliosOptionMember.FromField(type, target, field, attribute, typeAttribute));
             }
 
             PropertyInfo[] properties = type.GetProperties(flags);
@@ -138,7 +229,7 @@ namespace HeliosDebugger
                 if (!isStatic && target == null)
                     continue;
 
-                _options.Add(HeliosOptionMember.FromProperty(type, target, property, attribute, typeAttribute));
+                _reflectedOptions.Add(HeliosOptionMember.FromProperty(type, target, property, attribute, typeAttribute));
             }
 
             MethodInfo[] methods = type.GetMethods(flags);
@@ -146,22 +237,22 @@ namespace HeliosDebugger
             {
                 MethodInfo method = methods[i];
                 HeliosActionAttribute attribute = method.GetCustomAttribute<HeliosActionAttribute>();
-                if (attribute == null || method.GetParameters().Length > 0)
+                if (attribute == null || !HeliosReflectedAction.Supports(method))
                     continue;
 
                 object target = method.IsStatic ? null : instance;
                 if (!method.IsStatic && target == null)
                     continue;
 
-                _actions.Add(new HeliosReflectedAction(type, target, method, attribute, typeAttribute));
+                _reflectedActions.Add(new HeliosReflectedAction(type, target, method, attribute, typeAttribute));
             }
         }
 
         private void ApplyPersistedValues()
         {
-            for (int i = 0; i < _options.Count; i++)
+            for (int i = 0; i < _reflectedOptions.Count; i++)
             {
-                HeliosOptionMember option = _options[i];
+                HeliosOptionMember option = _reflectedOptions[i];
                 if (!option.Persist)
                     continue;
 
@@ -171,6 +262,177 @@ namespace HeliosDebugger
 
                 option.TrySetFromString(PlayerPrefs.GetString(key));
             }
+        }
+
+        private void RebuildSnapshots()
+        {
+            _options.Clear();
+            _actions.Clear();
+
+            for (int i = 0; i < _reflectedOptions.Count; i++)
+                _options.Add(_reflectedOptions[i]);
+            for (int i = 0; i < _reflectedActions.Count; i++)
+                _actions.Add(_reflectedActions[i]);
+            for (int i = 0; i < _containers.Count; i++)
+            {
+                ContainerRegistration registration = _containers[i];
+                for (int optionIndex = 0; optionIndex < registration.Options.Count; optionIndex++)
+                {
+                    if (!_options.Contains(registration.Options[optionIndex]))
+                        _options.Add(registration.Options[optionIndex]);
+                }
+                for (int actionIndex = 0; actionIndex < registration.Actions.Count; actionIndex++)
+                {
+                    if (!_actions.Contains(registration.Actions[actionIndex]))
+                        _actions.Add(registration.Actions[actionIndex]);
+                }
+            }
+
+            _options.Sort(CompareOptions);
+            _actions.Sort(CompareActions);
+        }
+
+        private void ImportContainer(ContainerRegistration registration)
+        {
+            IEnumerable<IHeliosValueOption> options = registration.Container.GetOptions();
+            if (options != null)
+            {
+                foreach (IHeliosValueOption option in options)
+                {
+                    if (option != null && !registration.Options.Contains(option))
+                        registration.Options.Add(option);
+                }
+            }
+
+            IEnumerable<IHeliosActionOption> actions = registration.Container.GetActions();
+            if (actions != null)
+            {
+                foreach (IHeliosActionOption action in actions)
+                {
+                    if (action != null && !registration.Actions.Contains(action))
+                        registration.Actions.Add(action);
+                }
+            }
+        }
+
+        private void Subscribe(ContainerRegistration registration)
+        {
+            registration.OptionAdded = option => OnContainerOptionAdded(registration, option);
+            registration.OptionRemoved = option => OnContainerOptionRemoved(registration, option);
+            registration.ActionAdded = action => OnContainerActionAdded(registration, action);
+            registration.ActionRemoved = action => OnContainerActionRemoved(registration, action);
+            registration.Container.OptionAdded += registration.OptionAdded;
+            registration.Container.OptionRemoved += registration.OptionRemoved;
+            registration.Container.ActionAdded += registration.ActionAdded;
+            registration.Container.ActionRemoved += registration.ActionRemoved;
+        }
+
+        private void Unsubscribe(ContainerRegistration registration)
+        {
+            if (registration.OptionAdded != null)
+                registration.Container.OptionAdded -= registration.OptionAdded;
+            if (registration.OptionRemoved != null)
+                registration.Container.OptionRemoved -= registration.OptionRemoved;
+            if (registration.ActionAdded != null)
+                registration.Container.ActionAdded -= registration.ActionAdded;
+            if (registration.ActionRemoved != null)
+                registration.Container.ActionRemoved -= registration.ActionRemoved;
+
+            registration.OptionAdded = null;
+            registration.OptionRemoved = null;
+            registration.ActionAdded = null;
+            registration.ActionRemoved = null;
+        }
+
+        private void OnContainerOptionAdded(ContainerRegistration registration, IHeliosValueOption option)
+        {
+            if (option == null || registration.Options.Contains(option))
+                return;
+
+            registration.Options.Add(option);
+            RebuildSnapshots();
+            MarkChanged();
+        }
+
+        private void OnContainerOptionRemoved(ContainerRegistration registration, IHeliosValueOption option)
+        {
+            if (option == null || !registration.Options.Remove(option))
+                return;
+
+            RebuildSnapshots();
+            MarkChanged();
+        }
+
+        private void OnContainerActionAdded(ContainerRegistration registration, IHeliosActionOption action)
+        {
+            if (action == null || registration.Actions.Contains(action))
+                return;
+
+            registration.Actions.Add(action);
+            RebuildSnapshots();
+            MarkChanged();
+        }
+
+        private void OnContainerActionRemoved(ContainerRegistration registration, IHeliosActionOption action)
+        {
+            if (action == null || !registration.Actions.Remove(action))
+                return;
+
+            RebuildSnapshots();
+            MarkChanged();
+        }
+
+        private HeliosDynamicOptionContainer EnsureDirectContainer()
+        {
+            if (_directContainer == null)
+            {
+                _directContainer = new HeliosDynamicOptionContainer();
+                RegisterOptionContainer(_directContainer);
+            }
+
+            return _directContainer;
+        }
+
+        private ContainerRegistration FindContainer(IHeliosOptionContainer container)
+        {
+            for (int i = 0; i < _containers.Count; i++)
+            {
+                if (ReferenceEquals(_containers[i].Container, container))
+                    return _containers[i];
+            }
+
+            return null;
+        }
+
+        private void MarkChanged()
+        {
+            _revision++;
+            Changed?.Invoke();
+        }
+
+        private static int CompareOptions(IHeliosValueOption left, IHeliosValueOption right)
+        {
+            int category = string.Compare(NormalizeCategory(left.Category), NormalizeCategory(right.Category), StringComparison.Ordinal);
+            if (category != 0)
+                return category;
+            if (left.Order != right.Order)
+                return left.Order.CompareTo(right.Order);
+            return string.Compare(left.DisplayName, right.DisplayName, StringComparison.Ordinal);
+        }
+
+        private static int CompareActions(IHeliosActionOption left, IHeliosActionOption right)
+        {
+            int category = string.Compare(NormalizeCategory(left.Category), NormalizeCategory(right.Category), StringComparison.Ordinal);
+            if (category != 0)
+                return category;
+            if (left.Order != right.Order)
+                return left.Order.CompareTo(right.Order);
+            return string.Compare(left.DisplayName, right.DisplayName, StringComparison.Ordinal);
+        }
+
+        private static string NormalizeCategory(string category)
+        {
+            return string.IsNullOrEmpty(category) ? "General" : category;
         }
 
         private static Type[] GetTypes(Assembly assembly)
@@ -188,9 +450,25 @@ namespace HeliosDebugger
                 return Array.Empty<Type>();
             }
         }
+
+        private sealed class ContainerRegistration
+        {
+            public readonly IHeliosOptionContainer Container;
+            public readonly List<IHeliosValueOption> Options = new List<IHeliosValueOption>();
+            public readonly List<IHeliosActionOption> Actions = new List<IHeliosActionOption>();
+            public Action<IHeliosValueOption> OptionAdded;
+            public Action<IHeliosValueOption> OptionRemoved;
+            public Action<IHeliosActionOption> ActionAdded;
+            public Action<IHeliosActionOption> ActionRemoved;
+
+            public ContainerRegistration(IHeliosOptionContainer container)
+            {
+                Container = container;
+            }
+        }
     }
 
-    public sealed class HeliosOptionMember
+    public sealed class HeliosOptionMember : IHeliosValueOption
     {
         private readonly object _target;
         private readonly FieldInfo _field;
@@ -369,7 +647,7 @@ namespace HeliosDebugger
             PlayerPrefs.Save();
         }
 
-        private static HeliosOptionValueKind GetValueKind(Type type)
+        public static HeliosOptionValueKind GetValueKind(Type type)
         {
             if (type == typeof(bool)) return HeliosOptionValueKind.Boolean;
             if (type == typeof(string)) return HeliosOptionValueKind.String;
@@ -394,10 +672,11 @@ namespace HeliosDebugger
         }
     }
 
-    public sealed class HeliosReflectedAction
+    public sealed class HeliosReflectedAction : IHeliosActionOption
     {
         private readonly object _target;
         private readonly MethodInfo _method;
+        private readonly List<HeliosActionParameter> _parameters = new List<HeliosActionParameter>();
 
         public HeliosReflectedAction(Type declaringType, object target, MethodInfo method, HeliosActionAttribute attribute, HeliosOptionsAttribute typeAttribute)
         {
@@ -409,6 +688,10 @@ namespace HeliosDebugger
             Description = attribute.Description ?? string.Empty;
             Order = attribute.Order;
             Pin = attribute.Pin;
+
+            ParameterInfo[] parameters = method.GetParameters();
+            for (int i = 0; i < parameters.Length; i++)
+                _parameters.Add(new HeliosActionParameter(parameters[i]));
         }
 
         public Type DeclaringType { get; }
@@ -417,12 +700,19 @@ namespace HeliosDebugger
         public string Description { get; }
         public int Order { get; }
         public bool Pin { get; }
+        public IReadOnlyList<HeliosActionParameter> Parameters => _parameters;
 
         public HeliosActionResult Invoke()
         {
+            return Invoke(Array.Empty<string>());
+        }
+
+        public HeliosActionResult Invoke(IReadOnlyList<string> parameterValues)
+        {
             try
             {
-                _method.Invoke(_target, null);
+                object[] arguments = BuildArguments(parameterValues);
+                _method.Invoke(_target, arguments);
                 return HeliosActionResult.Succeed($"Executed {DisplayName}.");
             }
             catch (TargetInvocationException ex)
@@ -436,6 +726,38 @@ namespace HeliosDebugger
             }
         }
 
+        public static bool Supports(MethodInfo method)
+        {
+            if (method == null)
+                return false;
+
+            ParameterInfo[] parameters = method.GetParameters();
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                if (HeliosActionParameter.GetValueKind(parameters[i].ParameterType) == HeliosOptionValueKind.Unsupported)
+                    return false;
+            }
+
+            return true;
+        }
+
+        private object[] BuildArguments(IReadOnlyList<string> parameterValues)
+        {
+            if (_parameters.Count == 0)
+                return null;
+
+            object[] arguments = new object[_parameters.Count];
+            for (int i = 0; i < _parameters.Count; i++)
+            {
+                string rawValue = parameterValues != null && i < parameterValues.Count
+                    ? parameterValues[i]
+                    : _parameters[i].DefaultText;
+                arguments[i] = _parameters[i].ConvertFromString(rawValue);
+            }
+
+            return arguments;
+        }
+
         private static string FirstNonEmpty(params string[] values)
         {
             for (int i = 0; i < values.Length; i++)
@@ -445,6 +767,103 @@ namespace HeliosDebugger
             }
 
             return string.Empty;
+        }
+    }
+
+    public sealed class HeliosActionParameter
+    {
+        private readonly ParameterInfo _parameter;
+
+        public HeliosActionParameter(ParameterInfo parameter)
+        {
+            _parameter = parameter ?? throw new ArgumentNullException(nameof(parameter));
+            Name = string.IsNullOrWhiteSpace(parameter.Name) ? $"Parameter{parameter.Position}" : parameter.Name;
+            ParameterType = parameter.ParameterType;
+            ValueKind = GetValueKind(ParameterType);
+            Range = parameter.GetCustomAttribute<HeliosRangeAttribute>();
+            DefaultText = BuildDefaultText(parameter, ValueKind);
+        }
+
+        public string Name { get; }
+        public Type ParameterType { get; }
+        public HeliosOptionValueKind ValueKind { get; }
+        public HeliosRangeAttribute Range { get; }
+        public string DefaultText { get; }
+
+        public object ConvertFromString(string text)
+        {
+            string value = text ?? string.Empty;
+
+            switch (ValueKind)
+            {
+                case HeliosOptionValueKind.Boolean:
+                    return bool.Parse(value);
+                case HeliosOptionValueKind.Integer:
+                    return Convert.ChangeType(ParseInteger(value), ParameterType, CultureInfo.InvariantCulture);
+                case HeliosOptionValueKind.Float:
+                    return Convert.ChangeType(ParseFloat(value), ParameterType, CultureInfo.InvariantCulture);
+                case HeliosOptionValueKind.String:
+                    return value;
+                case HeliosOptionValueKind.Enum:
+                    return Enum.Parse(ParameterType, value, true);
+                default:
+                    throw new NotSupportedException($"Unsupported action parameter type: {ParameterType.Name}");
+            }
+        }
+
+        public static HeliosOptionValueKind GetValueKind(Type type)
+        {
+            HeliosOptionValueKind kind = HeliosOptionMember.GetValueKind(type);
+            switch (kind)
+            {
+                case HeliosOptionValueKind.Boolean:
+                case HeliosOptionValueKind.Integer:
+                case HeliosOptionValueKind.Float:
+                case HeliosOptionValueKind.String:
+                case HeliosOptionValueKind.Enum:
+                    return kind;
+                default:
+                    return HeliosOptionValueKind.Unsupported;
+            }
+        }
+
+        private long ParseInteger(string value)
+        {
+            long parsed = long.Parse(value, CultureInfo.InvariantCulture);
+            if (Range == null)
+                return parsed;
+
+            long min = Mathf.RoundToInt(Range.Min);
+            long max = Mathf.RoundToInt(Range.Max);
+            return Math.Max(min, Math.Min(max, parsed));
+        }
+
+        private float ParseFloat(string value)
+        {
+            float parsed = float.Parse(value, CultureInfo.InvariantCulture);
+            return Range == null ? parsed : Mathf.Clamp(parsed, Range.Min, Range.Max);
+        }
+
+        private static string BuildDefaultText(ParameterInfo parameter, HeliosOptionValueKind kind)
+        {
+            if (parameter.HasDefaultValue && parameter.DefaultValue != null)
+                return Convert.ToString(parameter.DefaultValue, CultureInfo.InvariantCulture);
+
+            switch (kind)
+            {
+                case HeliosOptionValueKind.Boolean:
+                    return "false";
+                case HeliosOptionValueKind.Integer:
+                case HeliosOptionValueKind.Float:
+                    return "0";
+                case HeliosOptionValueKind.String:
+                    return string.Empty;
+                case HeliosOptionValueKind.Enum:
+                    Array values = Enum.GetValues(parameter.ParameterType);
+                    return values.Length > 0 ? values.GetValue(0).ToString() : string.Empty;
+                default:
+                    return string.Empty;
+            }
         }
     }
 }

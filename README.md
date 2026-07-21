@@ -50,6 +50,50 @@ For instance-owned options, call:
 Helios.RegisterOptions(myOptionsInstance);
 ```
 
+For options that appear and disappear at runtime, use a dynamic container and
+remove it when the owning object is disabled or destroyed:
+
+```csharp
+public sealed class EnemyDebugOptions : MonoBehaviour
+{
+    private readonly HeliosDynamicOptionContainer _options = new HeliosDynamicOptionContainer();
+    private float _speed = 1f;
+
+    private void OnEnable()
+    {
+        _options.AddOption(HeliosOptionDefinition.Create(
+            "Enemy Speed",
+            () => _speed,
+            value => _speed = value,
+            "Enemies"));
+        _options.AddAction(HeliosOptionDefinition.FromMethod(
+            "Log Enemy Speed",
+            () => Debug.Log(_speed),
+            "Enemies"));
+
+        Helios.AddOptionContainer(_options);
+    }
+
+    private void OnDisable()
+    {
+        Helios.RemoveOptionContainer(_options);
+    }
+}
+```
+
+You can also register individual dynamic entries directly:
+
+```csharp
+IHeliosValueOption option = HeliosOptionDefinition.Create(
+    "Wave Count",
+    () => waveCount,
+    value => waveCount = value,
+    "Spawning");
+
+Helios.AddOption(option);
+Helios.RemoveOption(option);
+```
+
 ## Core.Debug Bridge
 
 `Core.Debug` remains the template command registry. The optional `Core.Debug.HeliosBridge` module adapts Core debug commands into Helios actions while Helios captures Core logs through Unity's global log stream.

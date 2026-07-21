@@ -45,7 +45,8 @@ namespace HeliosDebugger
             GameObject go = CreatePanel(name, parent, new Color(0.16f, 0.2f, 0.26f, 0.96f));
             Button button = go.AddComponent<Button>();
             button.targetGraphic = go.GetComponent<Image>();
-            button.onClick.AddListener(onClick);
+            if (onClick != null)
+                button.onClick.AddListener(onClick);
 
             Text text = CreateText("Label", go.transform, label, 14, TextAnchor.MiddleCenter);
             Stretch(text.rectTransform);
@@ -70,6 +71,48 @@ namespace HeliosDebugger
                 input.onValueChanged.AddListener(onChanged);
 
             return input;
+        }
+
+        public HeliosTimeSeriesGraph CreateTimeSeriesGraph(string name, Transform parent, Color background)
+        {
+            GameObject container = CreatePanel(name, parent, background);
+            GameObject graphGo = new GameObject("Graph", typeof(RectTransform), typeof(CanvasRenderer), typeof(HeliosTimeSeriesGraph));
+            graphGo.transform.SetParent(container.transform, false);
+            HeliosTimeSeriesGraph graph = graphGo.GetComponent<HeliosTimeSeriesGraph>();
+            Stretch(graph.rectTransform, 8f, 8f, 8f, 8f);
+            return graph;
+        }
+
+        public GameObject CreateMetricCard(string name, Transform parent, string title, out Text value)
+        {
+            GameObject card = CreatePanel(name, parent, new Color(0.07f, 0.09f, 0.12f, 0.96f));
+            VerticalLayoutGroup layout = card.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(10, 10, 8, 8);
+            layout.spacing = 4f;
+            layout.childControlHeight = true;
+            layout.childControlWidth = true;
+            layout.childForceExpandHeight = false;
+
+            Text titleText = CreateText("Title", card.transform, title, 13);
+            titleText.color = new Color(1f, 1f, 1f, 0.58f);
+            AddLayout(titleText.gameObject, 22f);
+
+            value = CreateText("Value", card.transform, "--", 20);
+            AddLayout(value.gameObject, 30f);
+            return card;
+        }
+
+        public Image CreateFillBar(string name, Transform parent, Color background, Color fillColor)
+        {
+            GameObject bar = CreatePanel(name, parent, background);
+            GameObject fillGo = CreatePanel("Fill", bar.transform, fillColor);
+            Image fill = fillGo.GetComponent<Image>();
+            RectTransform fillRect = fill.rectTransform;
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = new Vector2(0f, 1f);
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+            return fill;
         }
 
         public ScrollRect CreateScrollView(string name, Transform parent, out RectTransform content)
@@ -147,6 +190,19 @@ namespace HeliosDebugger
                 return value;
 
             return value.Substring(0, Math.Max(0, max - 3)) + "...";
+        }
+
+        public static string FormatBytes(long bytes)
+        {
+            if (bytes < 0L)
+                return "Unavailable";
+
+            return $"{bytes / (1024f * 1024f):F1} MB";
+        }
+
+        public static string FormatValue(long value)
+        {
+            return value < 0L ? "Unavailable" : value.ToString();
         }
     }
 }

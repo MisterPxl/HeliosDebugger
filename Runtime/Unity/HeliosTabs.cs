@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
@@ -118,9 +119,22 @@ namespace HeliosDebugger
 
     public sealed class HeliosProfilerTab : HeliosTabBase
     {
-        private Text _summary;
-        private Text _history;
+        private readonly List<float> _frameTimes = new List<float>();
+        private HeliosTimeSeriesGraph _graph;
+        private Text _fpsValue;
+        private Text _frameValue;
+        private Text _scaleValue;
+        private Text _managedValue;
+        private Text _usedValue;
+        private Text _reservedValue;
+        private Text _gcValue;
+        private Text _drawCallsValue;
+        private Text _status;
+        private Image _managedFill;
+        private Image _reservedFill;
+        private Button _cleanButton;
         private float _lastRefresh;
+        private bool _cleaning;
 
         public override string Title => "Profiler";
         public override int Order => 10;
@@ -130,93 +144,288 @@ namespace HeliosDebugger
             GameObject controls = widgets.CreatePanel("ProfilerControls", parent, new Color(0f, 0f, 0f, 0f));
             controls.AddComponent<HorizontalLayoutGroup>().spacing = 6f;
             widgets.AddLayout(controls, 40f);
-            widgets.CreateButton("Reset", controls.transform, "Reset", () => Context.Service.Profiler.Reset());
+            widgets.CreateButton("Reset", controls.transform, "Reset", ResetHistory);
+            widgets.CreateButton("GCCollect", controls.transform, "GC Collect", CollectGarbage);
+            _cleanButton = widgets.CreateButton("Clean", controls.transform, "Clean", CleanUnusedAssets);
 
-            _summary = widgets.CreateText("Summary", parent, "Profiler warming up...", 18);
-            widgets.AddLayout(_summary.gameObject, 90f);
-            _history = widgets.CreateText("History", parent, string.Empty, 13, TextAnchor.UpperLeft);
+            _graph = widgets.CreateTimeSeriesGraph("FrameGraph", parent, new Color(0.04f, 0.05f, 0.07f, 0.96f));
+            _graph.Configure(
+                33.33f,
+                16.67f,
+                33.33f,
+                new Color(0.2f, 0.74f, 1f, 0.95f),
+                new Color(0.78f, 0.82f, 0.16f, 0.95f),
+                new Color(1f, 0.44f, 0.22f, 0.95f),
+                new Color(1f, 1f, 1f, 0.16f));
+            widgets.AddLayout(_graph.transform.parent.gameObject, 260f, 180f);
+
+            GameObject primaryMetrics = widgets.CreatePanel("PrimaryMetrics", parent, new Color(0f, 0f, 0f, 0f));
+            HorizontalLayoutGroup primaryLayout = primaryMetrics.AddComponent<HorizontalLayoutGroup>();
+            primaryLayout.spacing = 8f;
+            primaryLayout.childControlWidth = true;
+            primaryLayout.childForceExpandWidth = true;
+            widgets.AddLayout(primaryMetrics, 78f);
+            SetFlexibleWidth(widgets.CreateMetricCard("FpsCard", primaryMetrics.transform, "FPS", out _fpsValue));
+            SetFlexibleWidth(widgets.CreateMetricCard("FrameCard", primaryMetrics.transform, "Frame Time", out _frameValue));
+            SetFlexibleWidth(widgets.CreateMetricCard("ScaleCard", primaryMetrics.transform, "Graph Scale", out _scaleValue));
+
+            GameObject memoryMetrics = widgets.CreatePanel("MemoryMetrics", parent, new Color(0f, 0f, 0f, 0f));
+            HorizontalLayoutGroup memoryLayout = memoryMetrics.AddComponent<HorizontalLayoutGroup>();
+            memoryLayout.spacing = 8f;
+            memoryLayout.childControlWidth = true;
+            memoryLayout.childForceExpandWidth = true;
+            widgets.AddLayout(memoryMetrics, 126f);
+            SetFlexibleWidth(CreateMemoryCard(widgets, "ManagedCard", memoryMetrics.transform, "Managed Memory", out _managedValue, out _managedFill));
+            SetFlexibleWidth(CreateMemoryCard(widgets, "ReservedCard", memoryMetrics.transform, "Memory Usage", out _usedValue, out _reservedFill));
+
+            GameObject detailMetrics = widgets.CreatePanel("ProfilerDetails", parent, new Color(0f, 0f, 0f, 0f));
+            HorizontalLayoutGroup detailLayout = detailMetrics.AddComponent<HorizontalLayoutGroup>();
+            detailLayout.spacing = 8f;
+            detailLayout.childControlWidth = true;
+            detailLayout.childForceExpandWidth = true;
+            widgets.AddLayout(detailMetrics, 78f);
+            SetFlexibleWidth(widgets.CreateMetricCard("ReservedValueCard", detailMetrics.transform, "Reserved", out _reservedValue));
+            SetFlexibleWidth(widgets.CreateMetricCard("GcCard", detailMetrics.transform, "GC / Frame", out _gcValue));
+            SetFlexibleWidth(widgets.CreateMetricCard("DrawCallsCard", detailMetrics.transform, "Draw Calls", out _drawCallsValue));
+
+            _status = widgets.CreateText("ProfilerStatus", parent, "Profiler warming up...", 14);
+            _status.color = new Color(1f, 1f, 1f, 0.72f);
+            widgets.AddLayout(_status.gameObject, 34f);
         }
 
         public override void Refresh()
         {
-            if (Time.unscaledTime - _lastRefresh < Context.Service.Settings.ProfilerRefreshInterval)
+            if (_lastRefresh > 0f && Time.unscaledTime - _lastRefresh < Context.Service.Settings.ProfilerRefreshInterval)
                 return;
 
             _lastRefresh = Time.unscaledTime;
             HeliosProfilerSample latest = Context.Service.Profiler.Latest;
-            if (latest == null || _summary == null)
+            if (latest == null || _graph == null)
                 return;
 
-            _summary.text =
-                $"FPS: {latest.Fps:F1}\nFrame: {latest.FrameMs:F2} ms\nMemory: {FormatBytes(latest.TotalMemory)}\nGC/frame: {FormatBytes(latest.GcAllocated)}\nDraw calls: {FormatUnavailable(latest.DrawCalls)}";
-
             IReadOnlyList<HeliosProfilerSample> history = Context.Service.Profiler.History;
-            var builder = new StringBuilder(1024);
-            int start = Mathf.Max(0, history.Count - 24);
-            for (int i = start; i < history.Count; i++)
-            {
-                HeliosProfilerSample sample = history[i];
-                int bar = Mathf.Clamp(Mathf.RoundToInt(sample.FrameMs / 2f), 1, 40);
-                builder.Append(sample.FrameMs.ToString("F1")).Append("ms ");
-                for (int j = 0; j < bar; j++)
-                    builder.Append('|');
-                builder.AppendLine();
-            }
+            _frameTimes.Clear();
+            for (int i = 0; i < history.Count; i++)
+                _frameTimes.Add(history[i].FrameMs);
+            _graph.SetValues(_frameTimes, Context.Service.Settings.ProfilerHistoryCapacity);
 
-            _history.text = builder.ToString();
+            Color frameColor = ColorForFrame(latest.FrameMs);
+            _fpsValue.text = latest.Fps.ToString("F1");
+            _fpsValue.color = frameColor;
+            _frameValue.text = $"{latest.FrameMs:F2} ms";
+            _frameValue.color = frameColor;
+            _scaleValue.text = $"0 - {_graph.CurrentMaxValue:F1} ms";
+
+            _managedValue.text = HeliosWidgetFactory.FormatBytes(latest.ManagedMemory);
+            _usedValue.text = HeliosWidgetFactory.FormatBytes(latest.UsedMemory);
+            _reservedValue.text = HeliosWidgetFactory.FormatBytes(latest.ReservedMemory);
+            _gcValue.text = HeliosWidgetFactory.FormatBytes(latest.GcAllocated);
+            _drawCallsValue.text = HeliosWidgetFactory.FormatValue(latest.DrawCalls);
+
+            SetFill(_managedFill, latest.ManagedMemory, latest.UsedMemory);
+            SetFill(_reservedFill, latest.UsedMemory, latest.ReservedMemory);
+
+            if (!_cleaning && _status != null && _status.text == "Profiler warming up...")
+                _status.text = "Ready.";
         }
 
-        private static string FormatBytes(long bytes)
+        private void ResetHistory()
         {
-            if (bytes < 0L) return "unavailable";
-            return $"{bytes / (1024f * 1024f):F1} MB";
+            Context.Service.Profiler.Reset();
+            _lastRefresh = 0f;
+            _frameTimes.Clear();
+            if (_graph != null)
+                _graph.SetValues(_frameTimes, Context.Service.Settings.ProfilerHistoryCapacity);
+            if (_status != null)
+                _status.text = "History reset.";
         }
 
-        private static string FormatUnavailable(long value)
+        private void CollectGarbage()
         {
-            return value < 0L ? "unavailable" : value.ToString();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            _lastRefresh = 0f;
+            if (_status != null)
+                _status.text = "GC collection requested.";
+        }
+
+        private void CleanUnusedAssets()
+        {
+            if (_cleaning || Context.Root == null)
+                return;
+
+            Context.Root.Run(CleanRoutine());
+        }
+
+        private IEnumerator CleanRoutine()
+        {
+            _cleaning = true;
+            if (_cleanButton != null)
+                _cleanButton.interactable = false;
+            if (_status != null)
+                _status.text = "Cleaning unused assets...";
+
+            AsyncOperation operation = Resources.UnloadUnusedAssets();
+            while (operation != null && !operation.isDone)
+                yield return null;
+
+            GC.Collect();
+            _cleaning = false;
+            if (_cleanButton != null)
+                _cleanButton.interactable = true;
+            if (_status != null)
+                _status.text = "Clean complete.";
+            _lastRefresh = 0f;
+        }
+
+        private GameObject CreateMemoryCard(HeliosWidgetFactory widgets, string name, Transform parent, string title, out Text value, out Image fill)
+        {
+            GameObject card = widgets.CreatePanel(name, parent, new Color(0.07f, 0.09f, 0.12f, 0.96f));
+            VerticalLayoutGroup layout = card.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(10, 10, 8, 8);
+            layout.spacing = 6f;
+            layout.childControlHeight = true;
+            layout.childControlWidth = true;
+            layout.childForceExpandHeight = false;
+
+            Text titleText = widgets.CreateText("Title", card.transform, title, 13);
+            titleText.color = new Color(1f, 1f, 1f, 0.58f);
+            widgets.AddLayout(titleText.gameObject, 22f);
+
+            value = widgets.CreateText("Value", card.transform, "--", 20);
+            widgets.AddLayout(value.gameObject, 30f);
+
+            fill = widgets.CreateFillBar(
+                "UsageBar",
+                card.transform,
+                new Color(1f, 1f, 1f, 0.12f),
+                new Color(0.2f, 0.74f, 1f, 0.92f));
+            widgets.AddLayout(fill.transform.parent.gameObject, 18f);
+            return card;
+        }
+
+        private static void SetFill(Image fill, long value, long max)
+        {
+            if (fill == null)
+                return;
+
+            float ratio = 0f;
+            if (value >= 0L && max > 0L)
+                ratio = Mathf.Clamp01(value / (float)max);
+
+            RectTransform fillRect = fill.rectTransform;
+            fillRect.anchorMax = new Vector2(ratio, 1f);
+            fillRect.offsetMax = Vector2.zero;
+        }
+
+        private static void SetFlexibleWidth(GameObject go)
+        {
+            LayoutElement layout = go.GetComponent<LayoutElement>();
+            if (layout == null)
+                layout = go.AddComponent<LayoutElement>();
+
+            layout.flexibleWidth = 1f;
+        }
+
+        private static Color ColorForFrame(float frameMs)
+        {
+            if (frameMs >= 33.33f)
+                return new Color(1f, 0.44f, 0.22f);
+            if (frameMs >= 16.67f)
+                return new Color(0.78f, 0.82f, 0.16f);
+            return new Color(0.2f, 0.74f, 1f);
         }
     }
 
-    public sealed class HeliosOptionsTab : HeliosTabBase
+    public sealed class HeliosOptionsTab : HeliosTabBase, IHeliosTabOpenHandler
     {
+        private const int ForceRebuildRevision = -1;
+
+        private readonly List<OptionValueBinding> _valueBindings = new List<OptionValueBinding>();
         private RectTransform _content;
         private string _search = string.Empty;
-        private int _lastFingerprint;
+        private int _lastRevision = ForceRebuildRevision;
+        private bool _refreshRegistryOnNextRefresh;
 
         public override string Title => "Options";
         public override int Order => 20;
+
+        public override void Initialize(HeliosContext context)
+        {
+            if (Context != null)
+            {
+                Context.Service.Options.Changed -= OnOptionsChanged;
+                Context.Service.ActionsChanged -= OnOptionsChanged;
+            }
+
+            base.Initialize(context);
+            Context.Service.Options.Changed += OnOptionsChanged;
+            Context.Service.ActionsChanged += OnOptionsChanged;
+        }
+
+        public void OnOpened()
+        {
+            _refreshRegistryOnNextRefresh = true;
+            _lastRevision = ForceRebuildRevision;
+        }
 
         protected override void BuildContent(HeliosWidgetFactory widgets, Transform parent)
         {
             GameObject controls = widgets.CreatePanel("OptionsControls", parent, new Color(0f, 0f, 0f, 0f));
             controls.AddComponent<HorizontalLayoutGroup>().spacing = 6f;
             widgets.AddLayout(controls, 40f);
-            widgets.CreateButton("Refresh", controls.transform, "Refresh", () =>
-            {
-                Context.Service.Options.Refresh();
-                _lastFingerprint = 0;
-                Rebuild();
-            });
             InputField search = widgets.CreateInput("Search", controls.transform, "Search options", value =>
             {
                 _search = value ?? string.Empty;
-                _lastFingerprint = 0;
+                _lastRevision = ForceRebuildRevision;
                 Rebuild();
             });
             widgets.AddLayout(search.gameObject, 36f);
 
             ScrollRect scroll = widgets.CreateScrollView("OptionsList", parent, out _content);
             widgets.AddLayout(scroll.gameObject, 760f, 320f);
+            _lastRevision = ForceRebuildRevision;
         }
 
         public override void Refresh()
         {
-            int fingerprint = Context.Service.Options.Options.Count * 31 +
-                              Context.Service.Options.Actions.Count * 17 +
-                              Context.Service.Actions.Count;
-            if (fingerprint != _lastFingerprint)
+            if (_refreshRegistryOnNextRefresh)
+                RefreshOptionsRegistry();
+
+            int revision = Context.Service.Options.Revision;
+            if (revision != _lastRevision)
                 Rebuild();
+            else
+                RefreshOptionValues();
+        }
+
+        public override void Dispose()
+        {
+            if (Context != null)
+            {
+                Context.Service.Options.Changed -= OnOptionsChanged;
+                Context.Service.ActionsChanged -= OnOptionsChanged;
+            }
+        }
+
+        private void RefreshOptionsRegistry()
+        {
+            if (Context == null)
+            {
+                _refreshRegistryOnNextRefresh = true;
+                _lastRevision = ForceRebuildRevision;
+                return;
+            }
+
+            Context.Service.Options.Refresh();
+            _refreshRegistryOnNextRefresh = false;
+            _lastRevision = ForceRebuildRevision;
+        }
+
+        private void OnOptionsChanged()
+        {
+            _lastRevision = ForceRebuildRevision;
         }
 
         private void Rebuild()
@@ -224,42 +433,52 @@ namespace HeliosDebugger
             if (_content == null)
                 return;
 
+            _valueBindings.Clear();
             Widgets.Clear(_content);
-            string currentCategory = null;
-            IReadOnlyList<HeliosOptionMember> options = Context.Service.Options.Options;
+            List<OptionTabEntry> entries = new List<OptionTabEntry>();
+            IReadOnlyList<IHeliosValueOption> options = Context.Service.Options.Options;
             for (int i = 0; i < options.Count; i++)
             {
-                HeliosOptionMember option = options[i];
-                if (!Matches(option.DisplayName, option.Category))
-                    continue;
-
-                AddCategory(ref currentCategory, option.Category);
-                AddOption(option);
+                IHeliosValueOption option = options[i];
+                if (Matches(option.DisplayName, option.Category))
+                    entries.Add(new OptionTabEntry(option));
             }
 
-            IReadOnlyList<HeliosReflectedAction> reflected = Context.Service.Options.Actions;
+            IReadOnlyList<IHeliosActionOption> reflected = Context.Service.Options.Actions;
             for (int i = 0; i < reflected.Count; i++)
             {
-                HeliosReflectedAction action = reflected[i];
-                if (!Matches(action.DisplayName, action.Category))
-                    continue;
-
-                AddCategory(ref currentCategory, action.Category);
-                AddReflectedAction(action);
+                IHeliosActionOption action = reflected[i];
+                if (Matches(action.DisplayName, action.Category))
+                    entries.Add(new OptionTabEntry(action));
             }
 
             IReadOnlyList<HeliosActionDefinition> actions = Context.Service.Actions;
             for (int i = 0; i < actions.Count; i++)
             {
                 HeliosActionDefinition action = actions[i];
-                if (!Matches(action.DisplayName, action.Category))
-                    continue;
-
-                AddCategory(ref currentCategory, action.Category);
-                AddRuntimeAction(action);
+                if (Matches(action.DisplayName, action.Category))
+                    entries.Add(new OptionTabEntry(action));
             }
 
-            _lastFingerprint = options.Count * 31 + reflected.Count * 17 + actions.Count;
+            entries.Sort(CompareEntries);
+            string currentCategory = null;
+            for (int i = 0; i < entries.Count; i++)
+            {
+                OptionTabEntry entry = entries[i];
+                AddCategory(ref currentCategory, entry.Category);
+                if (entry.Option != null)
+                    AddOption(entry.Option);
+                else
+                    AddAction(entry.Action);
+            }
+
+            _lastRevision = Context.Service.Options.Revision;
+        }
+
+        private void RefreshOptionValues()
+        {
+            for (int i = 0; i < _valueBindings.Count; i++)
+                _valueBindings[i].Refresh();
         }
 
         private void AddCategory(ref string currentCategory, string category)
@@ -274,7 +493,7 @@ namespace HeliosDebugger
             Widgets.AddLayout(label.gameObject, 30f);
         }
 
-        private void AddOption(HeliosOptionMember option)
+        private void AddOption(IHeliosValueOption option)
         {
             GameObject row = Widgets.CreatePanel($"Option_{option.DisplayName}", _content, new Color(0.08f, 0.1f, 0.13f, 0.96f));
             HorizontalLayoutGroup layout = row.AddComponent<HorizontalLayoutGroup>();
@@ -284,8 +503,25 @@ namespace HeliosDebugger
 
             Text label = Widgets.CreateText("Label", row.transform, option.DisplayName, 14);
             Widgets.AddLayout(label.gameObject, -1f, 32f);
-            Text value = Widgets.CreateText("Value", row.transform, option.GetDisplayValue(), 14, TextAnchor.MiddleRight);
-            Widgets.AddLayout(value.gameObject, -1f, 32f);
+            InputField stringInput = null;
+            if (!option.IsReadOnly && option.ValueKind == HeliosOptionValueKind.String)
+            {
+                stringInput = Widgets.CreateInput("Value", row.transform, option.GetDisplayValue(), null);
+                stringInput.text = option.GetDisplayValue();
+                stringInput.onEndEdit.AddListener(text =>
+                {
+                    option.TrySetFromString(text);
+                    if (stringInput != null)
+                        stringInput.text = option.GetDisplayValue();
+                });
+                Widgets.AddLayout(stringInput.gameObject, -1f, 32f);
+            }
+            else
+            {
+                Text value = Widgets.CreateText("Value", row.transform, option.GetDisplayValue(), 14, TextAnchor.MiddleRight);
+                Widgets.AddLayout(value.gameObject, -1f, 32f);
+                _valueBindings.Add(new OptionValueBinding(option, value));
+            }
 
             if (option.IsReadOnly)
                 return;
@@ -295,7 +531,7 @@ namespace HeliosDebugger
                 Widgets.CreateButton("Toggle", row.transform, "Toggle", () =>
                 {
                     option.ToggleBoolean();
-                    Rebuild();
+                    RefreshOptionValues();
                 });
             }
             else if (option.ValueKind == HeliosOptionValueKind.Enum)
@@ -303,7 +539,7 @@ namespace HeliosDebugger
                 Widgets.CreateButton("Cycle", row.transform, "Next", () =>
                 {
                     option.CycleEnum();
-                    Rebuild();
+                    RefreshOptionValues();
                 });
             }
             else if (option.ValueKind == HeliosOptionValueKind.Integer || option.ValueKind == HeliosOptionValueKind.Float)
@@ -311,42 +547,287 @@ namespace HeliosDebugger
                 Widgets.CreateButton("Minus", row.transform, "-", () =>
                 {
                     option.Adjust(-1f);
-                    Rebuild();
+                    RefreshOptionValues();
                 });
                 Widgets.CreateButton("Plus", row.transform, "+", () =>
                 {
                     option.Adjust(1f);
-                    Rebuild();
+                    RefreshOptionValues();
                 });
             }
 
             Widgets.CreateButton("Reset", row.transform, "Reset", () =>
             {
                 option.Reset();
-                Rebuild();
+                if (stringInput != null)
+                    stringInput.text = option.GetDisplayValue();
+                RefreshOptionValues();
             });
         }
 
-        private void AddReflectedAction(HeliosReflectedAction action)
+        private void AddAction(IHeliosActionOption action)
         {
-            Button button = Widgets.CreateButton($"Action_{action.DisplayName}", _content, action.Pin ? $"Pinned: {action.DisplayName}" : action.DisplayName, () =>
+            if (action.Parameters.Count == 0)
             {
-                HeliosActionResult result = action.Invoke();
+                Button button = Widgets.CreateButton($"Action_{action.DisplayName}", _content, action.Pin ? $"Pinned: {action.DisplayName}" : action.DisplayName, () =>
+                {
+                    HeliosActionResult result = action.Invoke();
+                    if (!result.Success)
+                        UnityEngine.Debug.LogWarning($"Helios action failed: {result.Message}");
+                });
+                Widgets.AddLayout(button.gameObject, 40f);
+                return;
+            }
+
+            GameObject card = Widgets.CreatePanel($"Action_{action.DisplayName}", _content, new Color(0.08f, 0.1f, 0.13f, 0.96f));
+            VerticalLayoutGroup layout = card.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = 6f;
+            layout.padding = new RectOffset(8, 8, 6, 6);
+            layout.childControlWidth = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+            Widgets.AddLayout(card, Mathf.Max(96f, 84f + action.Parameters.Count * 42f));
+
+            Text title = Widgets.CreateText("Title", card.transform, action.Pin ? $"Pinned: {action.DisplayName}" : action.DisplayName, 14);
+            title.color = new Color(0.9f, 0.96f, 1f);
+            Widgets.AddLayout(title.gameObject, 24f);
+
+            List<Func<string>> valueReaders = new List<Func<string>>(action.Parameters.Count);
+            for (int i = 0; i < action.Parameters.Count; i++)
+            {
+                HeliosActionParameter parameter = action.Parameters[i];
+                AddActionParameterControl(card.transform, parameter, valueReaders);
+            }
+
+            Button run = Widgets.CreateButton("Run", card.transform, "Run", () =>
+            {
+                List<string> values = new List<string>(valueReaders.Count);
+                for (int i = 0; i < valueReaders.Count; i++)
+                    values.Add(valueReaders[i]());
+
+                HeliosActionResult result = action.Invoke(values);
                 if (!result.Success)
                     UnityEngine.Debug.LogWarning($"Helios action failed: {result.Message}");
             });
-            Widgets.AddLayout(button.gameObject, 40f);
+            Widgets.AddLayout(run.gameObject, 36f);
         }
 
-        private void AddRuntimeAction(HeliosActionDefinition action)
+        private void AddActionParameterControl(Transform parent, HeliosActionParameter parameter, List<Func<string>> valueReaders)
         {
-            Button button = Widgets.CreateButton($"RuntimeAction_{action.DisplayName}", _content, action.DisplayName, () =>
+            GameObject row = CreateActionParameterRow(parent, parameter);
+
+            switch (parameter.ValueKind)
             {
-                HeliosActionResult result = action.Invoke();
-                if (!result.Success)
-                    UnityEngine.Debug.LogWarning($"Helios action failed: {result.Message}");
+                case HeliosOptionValueKind.Boolean:
+                    AddBooleanParameterControl(row.transform, parameter, valueReaders);
+                    break;
+                case HeliosOptionValueKind.Enum:
+                    AddEnumParameterControl(row.transform, parameter, valueReaders);
+                    break;
+                case HeliosOptionValueKind.Integer:
+                case HeliosOptionValueKind.Float:
+                    AddNumericParameterControl(row.transform, parameter, valueReaders);
+                    break;
+                case HeliosOptionValueKind.String:
+                default:
+                    AddTextParameterControl(row.transform, parameter, valueReaders);
+                    break;
+            }
+        }
+
+        private GameObject CreateActionParameterRow(Transform parent, HeliosActionParameter parameter)
+        {
+            GameObject row = Widgets.CreatePanel($"Param_{parameter.Name}", parent, new Color(0f, 0f, 0f, 0f));
+            HorizontalLayoutGroup rowLayout = row.AddComponent<HorizontalLayoutGroup>();
+            rowLayout.spacing = 6f;
+            rowLayout.childControlWidth = true;
+            rowLayout.childForceExpandWidth = true;
+            Widgets.AddLayout(row, 36f);
+
+            Text label = Widgets.CreateText("Label", row.transform, FormatParameterLabel(parameter), 13);
+            Widgets.AddLayout(label.gameObject, -1f, 30f);
+            return row;
+        }
+
+        private void AddTextParameterControl(Transform parent, HeliosActionParameter parameter, List<Func<string>> valueReaders)
+        {
+            InputField input = Widgets.CreateInput("Value", parent, parameter.DefaultText, null);
+            input.text = parameter.DefaultText;
+            Widgets.AddLayout(input.gameObject, -1f, 30f);
+            valueReaders.Add(() => input != null ? input.text : string.Empty);
+        }
+
+        private void AddBooleanParameterControl(Transform parent, HeliosActionParameter parameter, List<Func<string>> valueReaders)
+        {
+            bool value = bool.TryParse(parameter.DefaultText, out bool parsed) && parsed;
+            Button button = Widgets.CreateButton("BooleanValue", parent, value ? "true" : "false", null);
+            Text buttonText = button.GetComponentInChildren<Text>();
+            button.onClick.AddListener(() =>
+            {
+                value = !value;
+                if (buttonText != null)
+                    buttonText.text = value ? "true" : "false";
             });
-            Widgets.AddLayout(button.gameObject, 40f);
+            Widgets.AddLayout(button.gameObject, -1f, 30f);
+            valueReaders.Add(() => value ? "true" : "false");
+        }
+
+        private void AddEnumParameterControl(Transform parent, HeliosActionParameter parameter, List<Func<string>> valueReaders)
+        {
+            string[] names = Enum.GetNames(parameter.ParameterType);
+            int index = Array.IndexOf(names, parameter.DefaultText);
+            if (index < 0)
+                index = 0;
+
+            Button button = Widgets.CreateButton("EnumValue", parent, names.Length == 0 ? string.Empty : names[index], null);
+            Text buttonText = button.GetComponentInChildren<Text>();
+            button.onClick.AddListener(() =>
+            {
+                if (names.Length == 0)
+                    return;
+
+                index = (index + 1) % names.Length;
+                if (buttonText != null)
+                    buttonText.text = names[index];
+            });
+            Widgets.AddLayout(button.gameObject, -1f, 30f);
+            valueReaders.Add(() => names.Length == 0 ? string.Empty : names[index]);
+        }
+
+        private void AddNumericParameterControl(Transform parent, HeliosActionParameter parameter, List<Func<string>> valueReaders)
+        {
+            if (parameter.Range == null)
+            {
+                AddFreeNumericParameterControl(parent, parameter, valueReaders);
+                return;
+            }
+
+            float value = ParseParameterFloat(parameter.DefaultText);
+            value = ClampParameterValue(parameter, value);
+
+            Button minus = Widgets.CreateButton("Minus", parent, "-", null);
+            Widgets.AddLayout(minus.gameObject, 34f, 30f);
+
+            InputField input = Widgets.CreateInput("Value", parent, FormatParameterNumber(parameter, value), null);
+            input.text = FormatParameterNumber(parameter, value);
+            Widgets.AddLayout(input.gameObject, -1f, 30f);
+
+            Button plus = Widgets.CreateButton("Plus", parent, "+", null);
+            Widgets.AddLayout(plus.gameObject, 34f, 30f);
+
+            minus.onClick.AddListener(() =>
+            {
+                value = ClampParameterValue(parameter, ParseParameterFloat(input.text) - GetParameterStep(parameter));
+                input.text = FormatParameterNumber(parameter, value);
+            });
+
+            plus.onClick.AddListener(() =>
+            {
+                value = ClampParameterValue(parameter, ParseParameterFloat(input.text) + GetParameterStep(parameter));
+                input.text = FormatParameterNumber(parameter, value);
+            });
+
+            input.onEndEdit.AddListener(text =>
+            {
+                value = ClampParameterValue(parameter, ParseParameterFloat(text));
+                input.text = FormatParameterNumber(parameter, value);
+            });
+
+            valueReaders.Add(() =>
+            {
+                value = ClampParameterValue(parameter, ParseParameterFloat(input.text));
+                string formatted = FormatParameterNumber(parameter, value);
+                input.text = formatted;
+                return formatted;
+            });
+        }
+
+        private void AddFreeNumericParameterControl(Transform parent, HeliosActionParameter parameter, List<Func<string>> valueReaders)
+        {
+            float value = ParseParameterFloat(parameter.DefaultText);
+            InputField input = Widgets.CreateInput("Value", parent, FormatParameterNumber(parameter, value), null);
+            input.text = FormatParameterNumber(parameter, value);
+            Widgets.AddLayout(input.gameObject, -1f, 30f);
+
+            input.onEndEdit.AddListener(text =>
+            {
+                value = ParseParameterFloat(text);
+                input.text = FormatParameterNumber(parameter, value);
+            });
+
+            valueReaders.Add(() =>
+            {
+                value = ParseParameterFloat(input.text);
+                string formatted = FormatParameterNumber(parameter, value);
+                input.text = formatted;
+                return formatted;
+            });
+        }
+
+        private static string FormatParameterLabel(HeliosActionParameter parameter)
+        {
+            string typeName;
+            switch (parameter.ValueKind)
+            {
+                case HeliosOptionValueKind.Boolean:
+                    typeName = "Boolean";
+                    break;
+                case HeliosOptionValueKind.Enum:
+                    typeName = $"Enum/{parameter.ParameterType.Name}";
+                    break;
+                case HeliosOptionValueKind.Integer:
+                case HeliosOptionValueKind.Float:
+                    typeName = parameter.Range == null ? parameter.ParameterType.Name : $"Range {parameter.Range.Min:g}-{parameter.Range.Max:g}";
+                    break;
+                case HeliosOptionValueKind.String:
+                    typeName = "String";
+                    break;
+                default:
+                    typeName = parameter.ParameterType.Name;
+                    break;
+            }
+
+            return $"{parameter.Name} ({typeName})";
+        }
+
+        private static float ParseParameterFloat(string text)
+        {
+            return float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out float value) ? value : 0f;
+        }
+
+        private static float ClampParameterValue(HeliosActionParameter parameter, float value)
+        {
+            if (parameter.Range != null)
+                value = Mathf.Clamp(value, parameter.Range.Min, parameter.Range.Max);
+
+            return parameter.ValueKind == HeliosOptionValueKind.Integer ? Mathf.Round(value) : value;
+        }
+
+        private static float GetParameterStep(HeliosActionParameter parameter)
+        {
+            float step = parameter.Range != null ? parameter.Range.Step : 1f;
+            return Mathf.Approximately(step, 0f) ? 1f : Mathf.Abs(step);
+        }
+
+        private static string FormatParameterNumber(HeliosActionParameter parameter, float value)
+        {
+            if (parameter.ValueKind == HeliosOptionValueKind.Integer)
+                return Mathf.RoundToInt(value).ToString(CultureInfo.InvariantCulture);
+
+            return value.ToString("0.###", CultureInfo.InvariantCulture);
+        }
+
+        private static int CompareEntries(OptionTabEntry left, OptionTabEntry right)
+        {
+            int category = string.Compare(NormalizeCategory(left.Category), NormalizeCategory(right.Category), StringComparison.Ordinal);
+            if (category != 0)
+                return category;
+            if (left.Order != right.Order)
+                return left.Order.CompareTo(right.Order);
+            int name = string.Compare(left.DisplayName, right.DisplayName, StringComparison.Ordinal);
+            if (name != 0)
+                return name;
+            return left.IsAction.CompareTo(right.IsAction);
         }
 
         private bool Matches(string displayName, string category)
@@ -356,6 +837,49 @@ namespace HeliosDebugger
 
             return displayName.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0 ||
                    (!string.IsNullOrEmpty(category) && category.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0);
+        }
+
+        private static string NormalizeCategory(string category)
+        {
+            return string.IsNullOrEmpty(category) ? "General" : category;
+        }
+
+        private sealed class OptionValueBinding
+        {
+            private readonly IHeliosValueOption _option;
+            private readonly Text _text;
+
+            public OptionValueBinding(IHeliosValueOption option, Text text)
+            {
+                _option = option;
+                _text = text;
+            }
+
+            public void Refresh()
+            {
+                if (_text != null)
+                    _text.text = _option.GetDisplayValue();
+            }
+        }
+
+        private sealed class OptionTabEntry
+        {
+            public OptionTabEntry(IHeliosValueOption option)
+            {
+                Option = option;
+            }
+
+            public OptionTabEntry(IHeliosActionOption action)
+            {
+                Action = action;
+            }
+
+            public IHeliosValueOption Option { get; }
+            public IHeliosActionOption Action { get; }
+            public bool IsAction => Action != null;
+            public string Category => Option != null ? Option.Category : Action.Category;
+            public string DisplayName => Option != null ? Option.DisplayName : Action.DisplayName;
+            public int Order => Option != null ? Option.Order : Action.Order;
         }
     }
 

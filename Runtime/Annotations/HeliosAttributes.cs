@@ -44,7 +44,7 @@ namespace HeliosDebugger
         public bool Pin { get; set; }
     }
 
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Parameter, Inherited = true)]
     public sealed class HeliosRangeAttribute : Attribute
     {
         public HeliosRangeAttribute(float min, float max, float step = 1f)
