@@ -1,4 +1,3 @@
-using System.IO;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
@@ -30,11 +29,11 @@ namespace HeliosDebugger.Editor
         [MenuItem("Tools/HeliosDebugger/Create Settings Asset")]
         public static void CreateSettingsAsset()
         {
-            const string resourcesPath = "Assets/Plugins/HeliosDebugger/Runtime/Resources";
+            const string resourcesPath = "Assets/Resources";
             const string assetPath = resourcesPath + "/HeliosDebuggerSettings.asset";
 
-            if (!Directory.Exists(resourcesPath))
-                Directory.CreateDirectory(resourcesPath);
+            if (!AssetDatabase.IsValidFolder(resourcesPath))
+                AssetDatabase.CreateFolder("Assets", "Resources");
 
             HeliosDebuggerSettings existing = AssetDatabase.LoadAssetAtPath<HeliosDebuggerSettings>(assetPath);
             if (existing != null)

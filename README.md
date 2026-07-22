@@ -13,13 +13,20 @@ It provides:
 
 ## Quick Start
 
-Import the plugin under `Assets/Plugins/HeliosDebugger`. By default it bootstraps itself in the Editor and Development Builds only.
+Add the package to the project's `Packages/manifest.json`:
+
+```json
+"com.misterpxl.helios-debugger": "https://github.com/misterpxl/HeliosDebugger.git#v1.0.0"
+```
+
+By default it bootstraps itself in the Editor and Development Builds only.
 
 Create settings with:
 
 `Tools > HeliosDebugger > Create Settings Asset`
 
-The settings asset is stored at `Assets/Plugins/HeliosDebugger/Runtime/Resources/HeliosDebuggerSettings.asset`.
+The project-owned settings asset is stored at
+`Assets/Resources/HeliosDebuggerSettings.asset`.
 
 ## Options
 

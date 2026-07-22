@@ -1,0 +1,21 @@
+{
+  "name": "com.misterpxl.helios-debugger",
+  "version": "1.0.0",
+  "displayName": "Helios Debugger",
+  "description": "Standalone runtime debugger, console, profiler and bug-reporting tools for Unity.",
+  "unity": "6000.0",
+  "dependencies": {
+    "com.unity.inputsystem": "1.19.0",
+    "com.unity.ugui": "2.0.0"
+  },
+  "samples": [
+    {
+      "displayName": "Usage Examples",
+      "description": "Examples showing static and dynamic Helios options.",
+      "path": "Samples~"
+    }
+  ],
+  "author": {
+    "name": "Alexis Gomes"
+  }
+}
