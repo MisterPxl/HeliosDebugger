@@ -6,6 +6,7 @@ namespace HeliosDebugger
 {
     public static class Helios
     {
+        private static readonly List<IHeliosTabProvider> TabProviders = new List<IHeliosTabProvider>();
         private static HeliosService _service;
 
         public static HeliosService Service => _service ?? (_service = HeliosService.CreateDefault());
@@ -23,7 +24,66 @@ namespace HeliosDebugger
         public static void Hide() => Service.Hide();
         public static void Toggle() => Service.Toggle();
         public static void OpenTab<TTab>() where TTab : IHeliosTab => Service.OpenTab(typeof(TTab));
-        public static void RegisterTab(IHeliosTab tab) => Service.RegisterTab(tab);
+        /// <summary>
+        /// Registers a tab and transfers disposal ownership to Helios when successful.
+        /// A rejected duplicate or a tab whose initialization throws remains owned by the caller.
+        /// </summary>
+        public static bool RegisterTab(IHeliosTab tab) => Service.RegisterTab(tab);
+        public static bool UnregisterTab<TTab>() where TTab : IHeliosTab =>
+            _service != null && _service.UnregisterTab(typeof(TTab));
+        public static bool RegisterTabProvider(IHeliosTabProvider provider)
+        {
+            if (provider == null)
+                return false;
+
+            Type providerType = provider.GetType();
+            for (int i = 0; i < TabProviders.Count; i++)
+            {
+                if (TabProviders[i].GetType() == providerType)
+                    return false;
+            }
+
+            TabProviders.Add(provider);
+            TabProviders.Sort(CompareTabProviders);
+            if (_service != null && _service.HasAttachedRoot)
+                _service.RegisterTabProvider(provider);
+            return true;
+        }
+
+        public static bool UnregisterTabProvider(IHeliosTabProvider provider)
+        {
+            if (provider == null)
+                return false;
+
+            for (int i = 0; i < TabProviders.Count; i++)
+            {
+                if (!ReferenceEquals(TabProviders[i], provider))
+                    continue;
+
+                Type providerType = provider.GetType();
+                TabProviders.RemoveAt(i);
+                _service?.UnregisterTabProvider(providerType);
+                return true;
+            }
+
+            return false;
+        }
+
+        public static bool UnregisterTabProvider<TProvider>() where TProvider : IHeliosTabProvider
+        {
+            Type providerType = typeof(TProvider);
+            for (int i = 0; i < TabProviders.Count; i++)
+            {
+                if (TabProviders[i].GetType() != providerType)
+                    continue;
+
+                TabProviders.RemoveAt(i);
+                _service?.UnregisterTabProvider(providerType);
+                return true;
+            }
+
+            return false;
+        }
         public static void RegisterOverlay(IHeliosOverlay overlay) => Service.RegisterOverlay(overlay);
         public static void RegisterShortcut(IHeliosShortcut shortcut) => Service.RegisterShortcut(shortcut);
         public static void RegisterOptionControlBuilder(IHeliosOptionControlBuilder builder) => Service.RegisterOptionControlBuilder(builder);
@@ -50,6 +110,28 @@ namespace HeliosDebugger
             _service?.Dispose();
             _service = null;
         }
+
+        internal static void MaterializeTabProviders(HeliosService service)
+        {
+            if (service == null)
+                return;
+
+            for (int i = 0; i < TabProviders.Count; i++)
+                service.RegisterTabProvider(TabProviders[i]);
+        }
+
+        internal static void ResetTabProvidersForTests()
+        {
+            Shutdown();
+            TabProviders.Clear();
+        }
+
+        private static int CompareTabProviders(IHeliosTabProvider left, IHeliosTabProvider right)
+        {
+            string leftName = left.GetType().FullName ?? left.GetType().Name;
+            string rightName = right.GetType().FullName ?? right.GetType().Name;
+            return string.Compare(leftName, rightName, StringComparison.Ordinal);
+        }
     }
 
     public sealed class HeliosService
@@ -59,9 +141,12 @@ namespace HeliosDebugger
         private readonly List<IHeliosShortcut> _shortcuts = new List<IHeliosShortcut>();
         private readonly List<IHeliosOptionControlBuilder> _optionControlBuilders = new List<IHeliosOptionControlBuilder>();
         private readonly List<HeliosActionDefinition> _actions = new List<HeliosActionDefinition>();
+        private readonly HashSet<Type> _materializedTabProviders = new HashSet<Type>();
+        private readonly Dictionary<Type, IHeliosTab> _providerTabs = new Dictionary<Type, IHeliosTab>();
 
         private HeliosContext _context;
         private bool _initialTabSelected;
+        private bool _disposed;
 
         public event Action VisibilityChanged;
         public event Action TabsChanged;
@@ -82,6 +167,7 @@ namespace HeliosDebugger
         public IReadOnlyList<IHeliosShortcut> Shortcuts => _shortcuts;
         public IReadOnlyList<IHeliosOptionControlBuilder> OptionControlBuilders => _optionControlBuilders;
         public IReadOnlyList<HeliosActionDefinition> Actions => _actions;
+        internal bool HasAttachedRoot => _context != null && _context.Root != null;
 
         private HeliosService(HeliosDebuggerSettings settings)
         {
@@ -100,6 +186,7 @@ namespace HeliosDebugger
         {
             var service = new HeliosService(settings);
             service.RegisterDefaultTabs();
+            Helios.MaterializeTabProviders(service);
             service.RegisterDefaultProviders();
             return service;
         }
@@ -123,35 +210,141 @@ namespace HeliosDebugger
             _context = new HeliosContext(this, root);
             for (int i = 0; i < _tabs.Count; i++)
                 _tabs[i].Initialize(_context);
+            Helios.MaterializeTabProviders(this);
             HeliosOverlayContext overlayContext = new HeliosOverlayContext(this, root);
             for (int i = 0; i < _overlays.Count; i++)
                 _overlays[i].Initialize(overlayContext);
         }
 
-        public void RegisterTab(IHeliosTab tab)
+        /// <summary>
+        /// Registers a tab and transfers disposal ownership to this service when successful.
+        /// A rejected duplicate or a tab whose initialization throws remains owned by the caller.
+        /// </summary>
+        public bool RegisterTab(IHeliosTab tab)
         {
-            if (tab == null)
-                return;
+            if (_disposed || tab == null)
+                return false;
 
             for (int i = 0; i < _tabs.Count; i++)
             {
                 if (_tabs[i].GetType() == tab.GetType())
-                    return;
+                    return false;
             }
 
             _tabs.Add(tab);
-            _tabs.Sort((left, right) => left.Order.CompareTo(right.Order));
+            _tabs.Sort(CompareTabs);
 
             if (_context != null)
-                tab.Initialize(_context);
+            {
+                try
+                {
+                    tab.Initialize(_context);
+                }
+                catch
+                {
+                    _tabs.Remove(tab);
+                    throw;
+                }
+            }
 
             ActiveTab = ActiveTab ?? tab;
             TabsChanged?.Invoke();
+            return true;
+        }
+
+        public bool UnregisterTab<TTab>() where TTab : IHeliosTab
+        {
+            return UnregisterTab(typeof(TTab));
+        }
+
+        internal bool UnregisterTab(Type tabType)
+        {
+            if (tabType == null)
+                return false;
+
+            for (int i = 0; i < _tabs.Count; i++)
+            {
+                IHeliosTab tab = _tabs[i];
+                if (tab.GetType() != tabType)
+                    continue;
+
+                _tabs.RemoveAt(i);
+                RemoveProviderTabMappings(tab);
+                if (ReferenceEquals(ActiveTab, tab))
+                    ActiveTab = _tabs.Count > 0 ? _tabs[0] : null;
+                DisposeTabSafely(tab);
+                Helios.MaterializeTabProviders(this);
+                TabsChanged?.Invoke();
+                return true;
+            }
+
+            return false;
+        }
+
+        internal bool RegisterTabProvider(IHeliosTabProvider provider)
+        {
+            if (_disposed || provider == null)
+                return false;
+
+            Type providerType = provider.GetType();
+            if (!_materializedTabProviders.Add(providerType))
+                return false;
+
+            IHeliosTab tab;
+            try
+            {
+                tab = provider.CreateTab();
+            }
+            catch
+            {
+                _materializedTabProviders.Remove(providerType);
+                throw;
+            }
+
+            if (tab == null)
+            {
+                _materializedTabProviders.Remove(providerType);
+                return false;
+            }
+
+            bool registered;
+            try
+            {
+                registered = RegisterTab(tab);
+            }
+            catch
+            {
+                _materializedTabProviders.Remove(providerType);
+                DisposeTabSafely(tab);
+                throw;
+            }
+
+            if (!registered)
+            {
+                _materializedTabProviders.Remove(providerType);
+                DisposeTabSafely(tab);
+                return false;
+            }
+
+            _providerTabs.Add(providerType, tab);
+            return true;
+        }
+
+        internal bool UnregisterTabProvider(Type providerType)
+        {
+            if (providerType == null || !_materializedTabProviders.Remove(providerType))
+                return false;
+
+            if (!_providerTabs.TryGetValue(providerType, out IHeliosTab tab))
+                return true;
+
+            _providerTabs.Remove(providerType);
+            return UnregisterTab(tab.GetType());
         }
 
         public void RegisterOverlay(IHeliosOverlay overlay)
         {
-            if (overlay == null || string.IsNullOrWhiteSpace(overlay.Id))
+            if (_disposed || overlay == null || string.IsNullOrWhiteSpace(overlay.Id))
                 return;
 
             for (int i = 0; i < _overlays.Count; i++)
@@ -336,12 +529,74 @@ namespace HeliosDebugger
 
         public void Dispose()
         {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+            for (int i = 0; i < _tabs.Count; i++)
+                DisposeTabSafely(_tabs[i]);
+            _tabs.Clear();
+            _providerTabs.Clear();
+            _materializedTabProviders.Clear();
+            ActiveTab = null;
+            for (int i = 0; i < _overlays.Count; i++)
+                DisposeOverlaySafely(_overlays[i]);
+            _overlays.Clear();
             Options.Dispose();
             Logs.Dispose();
             Profiler.Dispose();
-            for (int i = 0; i < _overlays.Count; i++)
-                _overlays[i].Dispose();
-            _overlays.Clear();
+            _context = null;
+        }
+
+        private static void DisposeTabSafely(IHeliosTab tab)
+        {
+            try
+            {
+                tab?.Dispose();
+            }
+            catch (Exception exception)
+            {
+                UnityEngine.Debug.LogException(exception);
+            }
+        }
+
+        private static void DisposeOverlaySafely(IHeliosOverlay overlay)
+        {
+            try
+            {
+                overlay?.Dispose();
+            }
+            catch (Exception exception)
+            {
+                UnityEngine.Debug.LogException(exception);
+            }
+        }
+
+        private void RemoveProviderTabMappings(IHeliosTab tab)
+        {
+            Type providerType = null;
+            foreach (KeyValuePair<Type, IHeliosTab> pair in _providerTabs)
+            {
+                if (ReferenceEquals(pair.Value, tab))
+                {
+                    providerType = pair.Key;
+                    break;
+                }
+            }
+
+            if (providerType != null)
+                _providerTabs.Remove(providerType);
+        }
+
+        private static int CompareTabs(IHeliosTab left, IHeliosTab right)
+        {
+            int order = left.Order.CompareTo(right.Order);
+            if (order != 0)
+                return order;
+
+            string leftName = left.GetType().FullName ?? left.GetType().Name;
+            string rightName = right.GetType().FullName ?? right.GetType().Name;
+            return string.Compare(leftName, rightName, StringComparison.Ordinal);
         }
 
         private void RegisterDefaultTabs()
@@ -447,6 +702,14 @@ namespace HeliosDebugger
         void Build(HeliosWidgetFactory widgets, Transform parent);
         void Refresh();
         void Dispose();
+    }
+
+    public interface IHeliosTabProvider
+    {
+        /// <summary>
+        /// Creates a fresh tab whose disposal ownership transfers to Helios.
+        /// </summary>
+        IHeliosTab CreateTab();
     }
 
     public interface IHeliosTabOpenHandler

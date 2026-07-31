@@ -1,5 +1,7 @@
 !/Samples~/
 !/Samples~/**
+!/Addons/**/Samples~/
+!/Addons/**/Samples~/**
 !/UnityProject~/
 !/UnityProject~/Assets/
 !/UnityProject~/Assets/**

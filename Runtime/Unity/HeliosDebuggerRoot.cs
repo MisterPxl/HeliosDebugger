@@ -100,8 +100,6 @@ namespace HeliosDebugger
                 _service.TabsChanged -= RebuildTabs;
                 _service.OverlaysChanged -= RebuildOverlays;
                 _service.Access.ChallengeRequested -= OnAccessChallengeRequested;
-                for (int i = 0; i < _service.Tabs.Count; i++)
-                    _service.Tabs[i].Dispose();
                 Helios.Shutdown();
             }
         }

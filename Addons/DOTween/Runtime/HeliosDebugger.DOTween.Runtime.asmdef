@@ -1,0 +1,19 @@
+{
+    "name": "HeliosDebugger.DOTween.Runtime",
+    "rootNamespace": "HeliosDebugger.DOTween",
+    "references": [
+        "HeliosDebugger.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "DOTWEEN",
+        "!HELIOS_DEBUGGER_DISABLE"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

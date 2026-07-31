@@ -1,0 +1,22 @@
+{
+    "name": "HeliosDebugger.DOTween.PlayMode.Tests",
+    "rootNamespace": "HeliosDebugger.DOTween.Tests",
+    "references": [
+        "HeliosDebugger.Runtime",
+        "HeliosDebugger.DOTween.Runtime",
+        "UnityEngine.TestRunner"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS",
+        "DOTWEEN",
+        "!HELIOS_DEBUGGER_DISABLE"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
