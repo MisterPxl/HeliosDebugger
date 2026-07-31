@@ -34,6 +34,11 @@ namespace HeliosDebugger
 
         public event Action Changed;
 
+        public HeliosOptionsRegistry()
+        {
+            HeliosGeneratedOptions.Changed += OnGeneratedOptionsChanged;
+        }
+
         public int Revision
         {
             get
@@ -79,6 +84,15 @@ namespace HeliosDebugger
             _scanned = false;
             MarkChanged();
             return true;
+        }
+
+        public void RegisterStaticType(Type type)
+        {
+            if (type == null)
+                throw new ArgumentNullException(nameof(type));
+            HeliosGeneratedOptions.Register(type);
+            _scanned = false;
+            MarkChanged();
         }
 
         public void RegisterOptionContainer(IHeliosOptionContainer container)
@@ -144,6 +158,7 @@ namespace HeliosDebugger
 
         public void Dispose()
         {
+            HeliosGeneratedOptions.Changed -= OnGeneratedOptionsChanged;
             for (int i = 0; i < _containers.Count; i++)
                 Unsubscribe(_containers[i]);
 
@@ -157,6 +172,12 @@ namespace HeliosDebugger
             _scanned = false;
         }
 
+        private void OnGeneratedOptionsChanged()
+        {
+            _scanned = false;
+            MarkChanged();
+        }
+
         private void EnsureScanned()
         {
             if (_scanned)
@@ -165,23 +186,20 @@ namespace HeliosDebugger
             _reflectedOptions.Clear();
             _reflectedActions.Clear();
 
+            HashSet<Type> scannedTypes = new HashSet<Type>();
+            IReadOnlyList<Type> generatedTypes = HeliosGeneratedOptions.Types;
+            for (int typeIndex = 0; typeIndex < generatedTypes.Count; typeIndex++)
+                ScanStaticType(generatedTypes[typeIndex], scannedTypes);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
             for (int assemblyIndex = 0; assemblyIndex < assemblies.Length; assemblyIndex++)
             {
                 Type[] types = GetTypes(assemblies[assemblyIndex]);
                 for (int typeIndex = 0; typeIndex < types.Length; typeIndex++)
-                {
-                    Type type = types[typeIndex];
-                    if (type == null)
-                        continue;
-
-                    HeliosOptionsAttribute optionsAttribute = type.GetCustomAttribute<HeliosOptionsAttribute>();
-                    if (optionsAttribute == null)
-                        continue;
-
-                    ScanType(type, null, optionsAttribute);
-                }
+                    ScanStaticType(types[typeIndex], scannedTypes);
             }
+#endif
 
             for (int i = 0; i < _instances.Count; i++)
             {
@@ -194,6 +212,16 @@ namespace HeliosDebugger
             ApplyPersistedValues();
             _scanned = true;
             RebuildSnapshots();
+        }
+
+        private void ScanStaticType(Type type, HashSet<Type> scannedTypes)
+        {
+            if (type == null || !scannedTypes.Add(type))
+                return;
+
+            HeliosOptionsAttribute optionsAttribute = type.GetCustomAttribute<HeliosOptionsAttribute>();
+            if (optionsAttribute != null)
+                ScanType(type, null, optionsAttribute);
         }
 
         private void ScanType(Type type, object instance, HeliosOptionsAttribute typeAttribute)
@@ -493,6 +521,7 @@ namespace HeliosDebugger
             Description = attribute.Description ?? string.Empty;
             Order = attribute.Order;
             Persist = attribute.Persist;
+            Pin = attribute.Pin;
             ValueType = field != null ? field.FieldType : property.PropertyType;
             ValueKind = GetValueKind(ValueType);
             Range = field != null
@@ -509,6 +538,7 @@ namespace HeliosDebugger
         public string Description { get; }
         public int Order { get; }
         public bool Persist { get; }
+        public bool Pin { get; }
         public bool IsReadOnly { get; }
         public Type ValueType { get; }
         public HeliosOptionValueKind ValueKind { get; }
@@ -532,8 +562,7 @@ namespace HeliosDebugger
 
         public string GetDisplayValue()
         {
-            object value = GetValue();
-            return value == null ? "<null>" : value.ToString();
+            return HeliosOptionValueConverter.Format(GetValue(), ValueType);
         }
 
         public bool TrySetFromString(string text)
@@ -543,7 +572,7 @@ namespace HeliosDebugger
 
             try
             {
-                object converted = ConvertFromString(text);
+                object converted = HeliosOptionValueConverter.ConvertFromString(text, ValueType);
                 SetValue(converted);
                 PersistIfNeeded();
                 return true;
@@ -573,16 +602,23 @@ namespace HeliosDebugger
             float step = Range != null ? Range.Step : 1f;
             if (ValueKind == HeliosOptionValueKind.Integer)
             {
-                int next = Convert.ToInt32(value, CultureInfo.InvariantCulture) + Mathf.RoundToInt(step * direction);
-                if (Range != null)
-                    next = Mathf.Clamp(next, Mathf.RoundToInt(Range.Min), Mathf.RoundToInt(Range.Max));
-                SetValue(Convert.ChangeType(next, ValueType, CultureInfo.InvariantCulture));
+                decimal amount = decimal.Round(
+                    Convert.ToDecimal(step * direction, CultureInfo.InvariantCulture),
+                    0,
+                    MidpointRounding.ToEven);
+                decimal? minimum = Range != null
+                    ? decimal.Round(Convert.ToDecimal(Range.Min, CultureInfo.InvariantCulture), 0, MidpointRounding.ToEven)
+                    : (decimal?)null;
+                decimal? maximum = Range != null
+                    ? decimal.Round(Convert.ToDecimal(Range.Max, CultureInfo.InvariantCulture), 0, MidpointRounding.ToEven)
+                    : (decimal?)null;
+                SetValue(HeliosOptionValueConverter.AdjustInteger(value, ValueType, amount, minimum, maximum));
             }
             else if (ValueKind == HeliosOptionValueKind.Float)
             {
-                float next = Convert.ToSingle(value, CultureInfo.InvariantCulture) + step * direction;
+                double next = Convert.ToDouble(value, CultureInfo.InvariantCulture) + step * direction;
                 if (Range != null)
-                    next = Mathf.Clamp(next, Range.Min, Range.Max);
+                    next = Math.Max(Range.Min, Math.Min(Range.Max, next));
                 SetValue(Convert.ChangeType(next, ValueType, CultureInfo.InvariantCulture));
             }
 
@@ -619,25 +655,6 @@ namespace HeliosDebugger
                 _property.SetValue(_target, value, null);
         }
 
-        private object ConvertFromString(string text)
-        {
-            switch (ValueKind)
-            {
-                case HeliosOptionValueKind.Boolean:
-                    return bool.Parse(text);
-                case HeliosOptionValueKind.Integer:
-                    return Convert.ChangeType(int.Parse(text, CultureInfo.InvariantCulture), ValueType, CultureInfo.InvariantCulture);
-                case HeliosOptionValueKind.Float:
-                    return Convert.ChangeType(float.Parse(text, CultureInfo.InvariantCulture), ValueType, CultureInfo.InvariantCulture);
-                case HeliosOptionValueKind.String:
-                    return text;
-                case HeliosOptionValueKind.Enum:
-                    return Enum.Parse(ValueType, text, true);
-                default:
-                    throw new NotSupportedException($"Unsupported option type: {ValueType.Name}");
-            }
-        }
-
         private void PersistIfNeeded()
         {
             if (!Persist)
@@ -649,15 +666,7 @@ namespace HeliosDebugger
 
         public static HeliosOptionValueKind GetValueKind(Type type)
         {
-            if (type == typeof(bool)) return HeliosOptionValueKind.Boolean;
-            if (type == typeof(string)) return HeliosOptionValueKind.String;
-            if (type.IsEnum) return HeliosOptionValueKind.Enum;
-            if (type == typeof(Vector2)) return HeliosOptionValueKind.Vector2;
-            if (type == typeof(Vector3)) return HeliosOptionValueKind.Vector3;
-            if (type == typeof(Color)) return HeliosOptionValueKind.Color;
-            if (type == typeof(float) || type == typeof(double)) return HeliosOptionValueKind.Float;
-            if (type == typeof(byte) || type == typeof(short) || type == typeof(int) || type == typeof(long)) return HeliosOptionValueKind.Integer;
-            return HeliosOptionValueKind.Unsupported;
+            return HeliosOptionValueConverter.GetValueKind(type);
         }
 
         private static string FirstNonEmpty(params string[] values)
@@ -793,61 +802,35 @@ namespace HeliosDebugger
         public object ConvertFromString(string text)
         {
             string value = text ?? string.Empty;
+            object converted = HeliosOptionValueConverter.ConvertFromString(value, ParameterType);
+            if (Range == null)
+                return converted;
 
-            switch (ValueKind)
+            if (ValueKind == HeliosOptionValueKind.Integer)
             {
-                case HeliosOptionValueKind.Boolean:
-                    return bool.Parse(value);
-                case HeliosOptionValueKind.Integer:
-                    return Convert.ChangeType(ParseInteger(value), ParameterType, CultureInfo.InvariantCulture);
-                case HeliosOptionValueKind.Float:
-                    return Convert.ChangeType(ParseFloat(value), ParameterType, CultureInfo.InvariantCulture);
-                case HeliosOptionValueKind.String:
-                    return value;
-                case HeliosOptionValueKind.Enum:
-                    return Enum.Parse(ParameterType, value, true);
-                default:
-                    throw new NotSupportedException($"Unsupported action parameter type: {ParameterType.Name}");
+                decimal minimum = decimal.Round(Convert.ToDecimal(Range.Min, CultureInfo.InvariantCulture), 0, MidpointRounding.ToEven);
+                decimal maximum = decimal.Round(Convert.ToDecimal(Range.Max, CultureInfo.InvariantCulture), 0, MidpointRounding.ToEven);
+                return HeliosOptionValueConverter.AdjustInteger(converted, ParameterType, 0m, minimum, maximum);
             }
+            if (ValueKind == HeliosOptionValueKind.Float)
+            {
+                double parsed = Convert.ToDouble(converted, CultureInfo.InvariantCulture);
+                double clamped = Math.Max(Range.Min, Math.Min(Range.Max, parsed));
+                return Convert.ChangeType(clamped, ParameterType, CultureInfo.InvariantCulture);
+            }
+
+            return converted;
         }
 
         public static HeliosOptionValueKind GetValueKind(Type type)
         {
-            HeliosOptionValueKind kind = HeliosOptionMember.GetValueKind(type);
-            switch (kind)
-            {
-                case HeliosOptionValueKind.Boolean:
-                case HeliosOptionValueKind.Integer:
-                case HeliosOptionValueKind.Float:
-                case HeliosOptionValueKind.String:
-                case HeliosOptionValueKind.Enum:
-                    return kind;
-                default:
-                    return HeliosOptionValueKind.Unsupported;
-            }
-        }
-
-        private long ParseInteger(string value)
-        {
-            long parsed = long.Parse(value, CultureInfo.InvariantCulture);
-            if (Range == null)
-                return parsed;
-
-            long min = Mathf.RoundToInt(Range.Min);
-            long max = Mathf.RoundToInt(Range.Max);
-            return Math.Max(min, Math.Min(max, parsed));
-        }
-
-        private float ParseFloat(string value)
-        {
-            float parsed = float.Parse(value, CultureInfo.InvariantCulture);
-            return Range == null ? parsed : Mathf.Clamp(parsed, Range.Min, Range.Max);
+            return HeliosOptionValueConverter.GetValueKind(type);
         }
 
         private static string BuildDefaultText(ParameterInfo parameter, HeliosOptionValueKind kind)
         {
             if (parameter.HasDefaultValue && parameter.DefaultValue != null)
-                return Convert.ToString(parameter.DefaultValue, CultureInfo.InvariantCulture);
+                return HeliosOptionValueConverter.Format(parameter.DefaultValue, parameter.ParameterType);
 
             switch (kind)
             {
@@ -861,6 +844,12 @@ namespace HeliosDebugger
                 case HeliosOptionValueKind.Enum:
                     Array values = Enum.GetValues(parameter.ParameterType);
                     return values.Length > 0 ? values.GetValue(0).ToString() : string.Empty;
+                case HeliosOptionValueKind.Vector2:
+                    return "0,0";
+                case HeliosOptionValueKind.Vector3:
+                    return "0,0,0";
+                case HeliosOptionValueKind.Color:
+                    return "0,0,0,1";
                 default:
                     return string.Empty;
             }

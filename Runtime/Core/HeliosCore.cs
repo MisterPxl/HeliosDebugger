@@ -24,7 +24,11 @@ namespace HeliosDebugger
         public static void Toggle() => Service.Toggle();
         public static void OpenTab<TTab>() where TTab : IHeliosTab => Service.OpenTab(typeof(TTab));
         public static void RegisterTab(IHeliosTab tab) => Service.RegisterTab(tab);
+        public static void RegisterOverlay(IHeliosOverlay overlay) => Service.RegisterOverlay(overlay);
+        public static void RegisterShortcut(IHeliosShortcut shortcut) => Service.RegisterShortcut(shortcut);
+        public static void RegisterOptionControlBuilder(IHeliosOptionControlBuilder builder) => Service.RegisterOptionControlBuilder(builder);
         public static void RegisterAction(HeliosActionDefinition action) => Service.RegisterAction(action);
+        public static void RegisterStaticOptions<TOptions>() => Service.Options.RegisterStaticType(typeof(TOptions));
         public static void RegisterOptions(object instance) => Service.Options.RegisterInstance(instance);
         public static bool UnregisterOptions(object instance) => Service.Options.UnregisterInstance(instance);
         public static void AddOptionContainer(IHeliosOptionContainer container) => Service.AddOptionContainer(container);
@@ -35,7 +39,11 @@ namespace HeliosDebugger
         public static bool RemoveOption(IHeliosActionOption action) => Service.RemoveOption(action);
         public static void RegisterSystemInfoProvider(IHeliosSystemInfoProvider provider) => Service.SystemInfo.RegisterProvider(provider);
         public static void RegisterReportTransport(IHeliosReportTransport transport) => Service.Reporting.RegisterTransport(transport);
-        public static void AddReportAttachment(HeliosReportAttachment attachment) => Service.Reporting.AddAttachment(attachment);
+        public static void AddReportAttachment(HeliosReportArtifact attachment) => Service.Reporting.AddAttachment(attachment);
+        public static void RegisterNativeShareProvider(IHeliosNativeShareProvider provider) => Service.RegisterNativeShareProvider(provider);
+        public static void SetAccessPolicy(IHeliosAccessPolicy policy) => Service.Access.SetPolicy(policy);
+        public static bool TryUnlock(string credential) => Service.TryUnlock(credential);
+        public static void Lock() => Service.Access.Lock();
 
         public static void Shutdown()
         {
@@ -47,12 +55,17 @@ namespace HeliosDebugger
     public sealed class HeliosService
     {
         private readonly List<IHeliosTab> _tabs = new List<IHeliosTab>();
+        private readonly List<IHeliosOverlay> _overlays = new List<IHeliosOverlay>();
+        private readonly List<IHeliosShortcut> _shortcuts = new List<IHeliosShortcut>();
+        private readonly List<IHeliosOptionControlBuilder> _optionControlBuilders = new List<IHeliosOptionControlBuilder>();
         private readonly List<HeliosActionDefinition> _actions = new List<HeliosActionDefinition>();
 
         private HeliosContext _context;
+        private bool _initialTabSelected;
 
         public event Action VisibilityChanged;
         public event Action TabsChanged;
+        public event Action OverlaysChanged;
         public event Action ActionsChanged;
 
         public HeliosDebuggerSettings Settings { get; private set; }
@@ -61,9 +74,13 @@ namespace HeliosDebugger
         public HeliosOptionsRegistry Options { get; }
         public HeliosSystemInfoRegistry SystemInfo { get; }
         public HeliosReportService Reporting { get; }
+        public HeliosAccessController Access { get; }
         public bool IsVisible { get; private set; }
         public IHeliosTab ActiveTab { get; private set; }
         public IReadOnlyList<IHeliosTab> Tabs => _tabs;
+        public IReadOnlyList<IHeliosOverlay> Overlays => _overlays;
+        public IReadOnlyList<IHeliosShortcut> Shortcuts => _shortcuts;
+        public IReadOnlyList<IHeliosOptionControlBuilder> OptionControlBuilders => _optionControlBuilders;
         public IReadOnlyList<HeliosActionDefinition> Actions => _actions;
 
         private HeliosService(HeliosDebuggerSettings settings)
@@ -74,6 +91,9 @@ namespace HeliosDebugger
             Options = new HeliosOptionsRegistry();
             SystemInfo = new HeliosSystemInfoRegistry();
             Reporting = new HeliosReportService(Logs, Profiler, SystemInfo);
+            Access = new HeliosAccessController(CreateAccessPolicy(Settings));
+            foreach (IHeliosOptionControlBuilder builder in HeliosBuiltInOptionControls.Create())
+                RegisterOptionControlBuilder(builder);
         }
 
         public static HeliosService CreateDefault(HeliosDebuggerSettings settings = null)
@@ -92,6 +112,10 @@ namespace HeliosDebugger
             Settings = settings;
             Logs.SetCapacity(settings.LogCapacity);
             Profiler.SetCapacity(settings.ProfilerHistoryCapacity);
+            Access.SetPolicy(CreateAccessPolicy(settings));
+            HeliosWebhookReportTransport webhook =
+                Reporting.GetTransport(HeliosTransportId.Webhook) as HeliosWebhookReportTransport;
+            webhook?.Configure(settings.WebhookUrl, 20);
         }
 
         public void AttachRoot(HeliosDebuggerRoot root)
@@ -99,6 +123,9 @@ namespace HeliosDebugger
             _context = new HeliosContext(this, root);
             for (int i = 0; i < _tabs.Count; i++)
                 _tabs[i].Initialize(_context);
+            HeliosOverlayContext overlayContext = new HeliosOverlayContext(this, root);
+            for (int i = 0; i < _overlays.Count; i++)
+                _overlays[i].Initialize(overlayContext);
         }
 
         public void RegisterTab(IHeliosTab tab)
@@ -120,6 +147,68 @@ namespace HeliosDebugger
 
             ActiveTab = ActiveTab ?? tab;
             TabsChanged?.Invoke();
+        }
+
+        public void RegisterOverlay(IHeliosOverlay overlay)
+        {
+            if (overlay == null || string.IsNullOrWhiteSpace(overlay.Id))
+                return;
+
+            for (int i = 0; i < _overlays.Count; i++)
+            {
+                if (string.Equals(_overlays[i].Id, overlay.Id, StringComparison.Ordinal))
+                {
+                    _overlays[i].Dispose();
+                    _overlays[i] = overlay;
+                    if (_context != null)
+                        overlay.Initialize(new HeliosOverlayContext(this, _context.Root));
+                    _overlays.Sort((left, right) => left.Order.CompareTo(right.Order));
+                    OverlaysChanged?.Invoke();
+                    return;
+                }
+            }
+
+            _overlays.Add(overlay);
+            _overlays.Sort((left, right) => left.Order.CompareTo(right.Order));
+            if (_context != null)
+                overlay.Initialize(new HeliosOverlayContext(this, _context.Root));
+            OverlaysChanged?.Invoke();
+        }
+
+        public void RegisterShortcut(IHeliosShortcut shortcut)
+        {
+            if (shortcut == null || string.IsNullOrWhiteSpace(shortcut.Id))
+                return;
+
+            for (int i = 0; i < _shortcuts.Count; i++)
+            {
+                if (!string.Equals(_shortcuts[i].Id, shortcut.Id, StringComparison.Ordinal))
+                    continue;
+                _shortcuts[i] = shortcut;
+                _shortcuts.Sort((left, right) => left.Order.CompareTo(right.Order));
+                return;
+            }
+
+            _shortcuts.Add(shortcut);
+            _shortcuts.Sort((left, right) => left.Order.CompareTo(right.Order));
+        }
+
+        public void RegisterOptionControlBuilder(IHeliosOptionControlBuilder builder)
+        {
+            if (builder == null)
+                return;
+
+            for (int i = 0; i < _optionControlBuilders.Count; i++)
+            {
+                if (_optionControlBuilders[i].GetType() != builder.GetType())
+                    continue;
+                _optionControlBuilders[i] = builder;
+                _optionControlBuilders.Sort((left, right) => left.Order.CompareTo(right.Order));
+                return;
+            }
+
+            _optionControlBuilders.Add(builder);
+            _optionControlBuilders.Sort((left, right) => left.Order.CompareTo(right.Order));
         }
 
         public void RegisterAction(HeliosActionDefinition action)
@@ -174,6 +263,14 @@ namespace HeliosDebugger
 
         public void Show()
         {
+            Access.Request(
+                new HeliosAccessRequest(HeliosAccessOperation.OpenDebugger),
+                ShowAllowed);
+        }
+
+        private void ShowAllowed()
+        {
+            SelectInitialTab();
             IsVisible = true;
             VisibilityChanged?.Invoke();
         }
@@ -201,6 +298,7 @@ namespace HeliosDebugger
                     continue;
 
                 ActiveTab = tab;
+                RememberTab(tab);
                 IHeliosTabOpenHandler openHandler = tab as IHeliosTabOpenHandler;
                 if (openHandler != null)
                     openHandler.OnOpened();
@@ -208,6 +306,27 @@ namespace HeliosDebugger
                 Show();
                 return;
             }
+        }
+
+        public void OpenTabById(string tabId)
+        {
+            if (string.IsNullOrWhiteSpace(tabId))
+                return;
+
+            for (int i = 0; i < _tabs.Count; i++)
+            {
+                IHeliosTab tab = _tabs[i];
+                if (!string.Equals(GetTabId(tab), tabId, StringComparison.Ordinal))
+                    continue;
+
+                OpenTab(tab.GetType());
+                return;
+            }
+        }
+
+        public bool TryUnlock(string credential)
+        {
+            return Access.TryUnlock(credential);
         }
 
         public void Tick(float deltaTime)
@@ -220,6 +339,9 @@ namespace HeliosDebugger
             Options.Dispose();
             Logs.Dispose();
             Profiler.Dispose();
+            for (int i = 0; i < _overlays.Count; i++)
+                _overlays[i].Dispose();
+            _overlays.Clear();
         }
 
         private void RegisterDefaultTabs()
@@ -235,8 +357,73 @@ namespace HeliosDebugger
         {
             SystemInfo.RegisterProvider(new HeliosDefaultSystemInfoProvider());
             Reporting.RegisterTransport(new HeliosLocalReportTransport());
-            Reporting.RegisterTransport(new HeliosWebhookReportTransport());
+            Reporting.RegisterTransport(new HeliosWebhookReportTransport(Settings.WebhookUrl));
             Reporting.RegisterTransport(new HeliosNativeShareReportTransport());
+        }
+
+        public void RegisterNativeShareProvider(IHeliosNativeShareProvider provider)
+        {
+            HeliosNativeShareReportTransport transport =
+                Reporting.GetTransport(HeliosTransportId.NativeShare) as HeliosNativeShareReportTransport;
+            if (transport == null)
+            {
+                transport = new HeliosNativeShareReportTransport();
+                Reporting.RegisterTransport(transport);
+            }
+            transport.Providers.Register(provider);
+        }
+
+        private void SelectInitialTab()
+        {
+            if (_initialTabSelected)
+                return;
+
+            _initialTabSelected = true;
+            string tabId = Settings.DefaultTabId;
+            if (Settings.RememberLastTab)
+                tabId = PlayerPrefs.GetString("HeliosDebugger.LastTab", tabId);
+
+            for (int i = 0; i < _tabs.Count; i++)
+            {
+                if (!string.Equals(GetTabId(_tabs[i]), tabId, StringComparison.Ordinal))
+                    continue;
+                ActiveTab = _tabs[i];
+                IHeliosTabOpenHandler openHandler = ActiveTab as IHeliosTabOpenHandler;
+                openHandler?.OnOpened();
+                TabsChanged?.Invoke();
+                return;
+            }
+        }
+
+        private void RememberTab(IHeliosTab tab)
+        {
+            if (!Settings.RememberLastTab || tab == null)
+                return;
+            PlayerPrefs.SetString("HeliosDebugger.LastTab", GetTabId(tab));
+        }
+
+        private static string GetTabId(IHeliosTab tab)
+        {
+            return tab.GetType().FullName ?? tab.GetType().Name;
+        }
+
+        private static IHeliosAccessPolicy CreateAccessPolicy(HeliosDebuggerSettings settings)
+        {
+            if (settings == null || !settings.RequirePin)
+                return new HeliosAllowAllAccessPolicy();
+
+            try
+            {
+                return new HeliosPinAccessPolicy(
+                    settings.PinSalt,
+                    settings.PinHash,
+                    TimeSpan.FromMinutes(settings.PinSessionMinutes));
+            }
+            catch (Exception exception)
+            {
+                UnityEngine.Debug.LogError($"Helios PIN configuration is invalid: {exception.Message}");
+                return new HeliosDenyAllAccessPolicy();
+            }
         }
     }
 

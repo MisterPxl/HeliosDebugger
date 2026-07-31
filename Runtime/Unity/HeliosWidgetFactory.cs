@@ -8,13 +8,17 @@ namespace HeliosDebugger
     public sealed class HeliosWidgetFactory
     {
         private readonly Font _font;
+        private readonly HeliosThemeProfile _theme;
 
-        public HeliosWidgetFactory()
+        public HeliosWidgetFactory(HeliosThemeProfile theme = null)
         {
+            _theme = theme != null ? theme : HeliosThemeProfile.CreateRuntimeDefault();
             _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             if (_font == null)
-                _font = Font.CreateDynamicFontFromOSFont("Arial", 14);
+                _font = Font.CreateDynamicFontFromOSFont("Arial", _theme.BaseFontSize);
         }
+
+        public HeliosThemeProfile Theme => _theme;
 
         public GameObject CreatePanel(string name, Transform parent, Color color)
         {
@@ -24,7 +28,7 @@ namespace HeliosDebugger
             return go;
         }
 
-        public Text CreateText(string name, Transform parent, string text, int fontSize = 14, TextAnchor alignment = TextAnchor.MiddleLeft)
+        public Text CreateText(string name, Transform parent, string text, int fontSize = 0, TextAnchor alignment = TextAnchor.MiddleLeft)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(Text));
             go.transform.SetParent(parent, false);
@@ -32,9 +36,9 @@ namespace HeliosDebugger
             Text label = go.GetComponent<Text>();
             label.font = _font;
             label.text = text;
-            label.fontSize = fontSize;
+            label.fontSize = fontSize > 0 ? fontSize : _theme.BaseFontSize;
             label.alignment = alignment;
-            label.color = Color.white;
+            label.color = _theme.Text;
             label.horizontalOverflow = HorizontalWrapMode.Wrap;
             label.verticalOverflow = VerticalWrapMode.Overflow;
             return label;
@@ -42,28 +46,28 @@ namespace HeliosDebugger
 
         public Button CreateButton(string name, Transform parent, string label, UnityAction onClick)
         {
-            GameObject go = CreatePanel(name, parent, new Color(0.16f, 0.2f, 0.26f, 0.96f));
+            GameObject go = CreatePanel(name, parent, _theme.Button);
             Button button = go.AddComponent<Button>();
             button.targetGraphic = go.GetComponent<Image>();
             if (onClick != null)
                 button.onClick.AddListener(onClick);
 
-            Text text = CreateText("Label", go.transform, label, 14, TextAnchor.MiddleCenter);
+            Text text = CreateText("Label", go.transform, label, _theme.BaseFontSize, TextAnchor.MiddleCenter);
             Stretch(text.rectTransform);
             return button;
         }
 
         public InputField CreateInput(string name, Transform parent, string placeholder, UnityAction<string> onChanged)
         {
-            GameObject go = CreatePanel(name, parent, new Color(0.07f, 0.09f, 0.12f, 0.98f));
+            GameObject go = CreatePanel(name, parent, _theme.Input);
             InputField input = go.AddComponent<InputField>();
 
-            Text text = CreateText("Text", go.transform, string.Empty, 14, TextAnchor.MiddleLeft);
+            Text text = CreateText("Text", go.transform, string.Empty, _theme.BaseFontSize, TextAnchor.MiddleLeft);
             Stretch(text.rectTransform, 8f, 4f, 8f, 4f);
             input.textComponent = text;
 
-            Text placeholderText = CreateText("Placeholder", go.transform, placeholder, 14, TextAnchor.MiddleLeft);
-            placeholderText.color = new Color(1f, 1f, 1f, 0.42f);
+            Text placeholderText = CreateText("Placeholder", go.transform, placeholder, _theme.BaseFontSize, TextAnchor.MiddleLeft);
+            placeholderText.color = _theme.MutedText;
             Stretch(placeholderText.rectTransform, 8f, 4f, 8f, 4f);
             input.placeholder = placeholderText;
 
@@ -85,7 +89,7 @@ namespace HeliosDebugger
 
         public GameObject CreateMetricCard(string name, Transform parent, string title, out Text value)
         {
-            GameObject card = CreatePanel(name, parent, new Color(0.07f, 0.09f, 0.12f, 0.96f));
+            GameObject card = CreatePanel(name, parent, _theme.Input);
             VerticalLayoutGroup layout = card.AddComponent<VerticalLayoutGroup>();
             layout.padding = new RectOffset(10, 10, 8, 8);
             layout.spacing = 4f;
@@ -94,7 +98,7 @@ namespace HeliosDebugger
             layout.childForceExpandHeight = false;
 
             Text titleText = CreateText("Title", card.transform, title, 13);
-            titleText.color = new Color(1f, 1f, 1f, 0.58f);
+            titleText.color = _theme.MutedText;
             AddLayout(titleText.gameObject, 22f);
 
             value = CreateText("Value", card.transform, "--", 20);
@@ -117,7 +121,7 @@ namespace HeliosDebugger
 
         public ScrollRect CreateScrollView(string name, Transform parent, out RectTransform content)
         {
-            GameObject viewport = CreatePanel(name, parent, new Color(0.04f, 0.05f, 0.07f, 0.96f));
+            GameObject viewport = CreatePanel(name, parent, _theme.Navigation);
             ScrollRect scroll = viewport.AddComponent<ScrollRect>();
             Mask mask = viewport.AddComponent<Mask>();
             mask.showMaskGraphic = true;

@@ -1,0 +1,24 @@
+{
+    "name": "HeliosDebugger.PlayMode.Tests",
+    "rootNamespace": "HeliosDebugger.Tests",
+    "references": [
+        "HeliosDebugger.Runtime",
+        "HeliosDebugger.Annotations",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS",
+        "!HELIOS_DEBUGGER_DISABLE"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

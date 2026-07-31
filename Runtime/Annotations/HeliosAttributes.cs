@@ -27,6 +27,7 @@ namespace HeliosDebugger
         public int Order { get; set; }
         public bool ReadOnly { get; set; }
         public bool Persist { get; set; }
+        public bool Pin { get; set; }
     }
 
     [AttributeUsage(AttributeTargets.Method, Inherited = true)]

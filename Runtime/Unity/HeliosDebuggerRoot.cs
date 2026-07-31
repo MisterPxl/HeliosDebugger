@@ -14,9 +14,16 @@ namespace HeliosDebugger
         private readonly List<Button> _tabButtons = new List<Button>();
         private HeliosService _service;
         private HeliosWidgetFactory _widgets;
+        private Canvas _canvas;
         private GameObject _panel;
         private GameObject _trigger;
+        private GameObject _overlayRoot;
+        private GameObject _challengePanel;
+        private InputField _challengeInput;
+        private Text _challengeStatus;
         private RectTransform _content;
+        private Camera _canvasCamera;
+        private Transform _worldSpaceAnchor;
         private float _lastTriggerTapTime;
         private int _triggerTapCount;
         private readonly List<Key> _konami = new List<Key>
@@ -39,7 +46,7 @@ namespace HeliosDebugger
             if (!settings.AutoBootstrap)
                 return;
 
-            if (settings.DevelopmentBuildOnly && !Application.isEditor && !UnityEngine.Debug.isDebugBuild)
+            if (!HeliosBootstrapPolicy.CanRun(settings, Application.isEditor, UnityEngine.Debug.isDebugBuild))
                 return;
 
             if (FindAnyObjectByType<HeliosDebuggerRoot>() != null)
@@ -55,12 +62,15 @@ namespace HeliosDebugger
         private void Awake()
         {
             _service = Helios.Service;
+            _widgets = new HeliosWidgetFactory(_service.Settings.Theme);
+            RegisterBuiltInOverlays();
             _service.AttachRoot(this);
-            _widgets = new HeliosWidgetFactory();
             EnsureEventSystem();
             BuildInterface();
             _service.VisibilityChanged += OnVisibilityChanged;
             _service.TabsChanged += RebuildTabs;
+            _service.OverlaysChanged += RebuildOverlays;
+            _service.Access.ChallengeRequested += OnAccessChallengeRequested;
             OnVisibilityChanged();
 
             if (_service.Settings.VisibleAtStartup)
@@ -75,6 +85,11 @@ namespace HeliosDebugger
 
             if (_service.ActiveTab != null && _service.IsVisible)
                 _service.ActiveTab.Refresh();
+            if (!_service.IsVisible)
+            {
+                for (int i = 0; i < _service.Overlays.Count; i++)
+                    _service.Overlays[i].Refresh();
+            }
         }
 
         private void OnDestroy()
@@ -83,6 +98,8 @@ namespace HeliosDebugger
             {
                 _service.VisibilityChanged -= OnVisibilityChanged;
                 _service.TabsChanged -= RebuildTabs;
+                _service.OverlaysChanged -= RebuildOverlays;
+                _service.Access.ChallengeRequested -= OnAccessChallengeRequested;
                 for (int i = 0; i < _service.Tabs.Count; i++)
                     _service.Tabs[i].Dispose();
                 Helios.Shutdown();
@@ -94,6 +111,18 @@ namespace HeliosDebugger
             return StartCoroutine(routine);
         }
 
+        public void SetCanvasCamera(Camera targetCamera)
+        {
+            _canvasCamera = targetCamera;
+            ApplyCanvasPlacement();
+        }
+
+        public void SetWorldSpaceAnchor(Transform anchor)
+        {
+            _worldSpaceAnchor = anchor;
+            ApplyCanvasPlacement();
+        }
+
         public void RebuildActiveTab()
         {
             if (_content == null || _service.ActiveTab == null)
@@ -103,25 +132,43 @@ namespace HeliosDebugger
             _service.ActiveTab.Build(_widgets, _content);
         }
 
+        public void RebuildOverlays()
+        {
+            if (_overlayRoot == null)
+                return;
+
+            _widgets.Clear(_overlayRoot.transform);
+            for (int i = 0; i < _service.Overlays.Count; i++)
+            {
+                IHeliosOverlay overlay = _service.Overlays[i];
+                GameObject root = _widgets.CreatePanel($"Overlay_{overlay.Id}", _overlayRoot.transform, Color.clear);
+                HeliosWidgetFactory.Stretch(root.GetComponent<RectTransform>());
+                overlay.Build(_widgets, root.transform);
+            }
+        }
+
         private void BuildInterface()
         {
             GameObject canvasGo = new GameObject("HeliosCanvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             canvasGo.transform.SetParent(transform, false);
 
-            Canvas canvas = canvasGo.GetComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = short.MaxValue;
+            _canvas = canvasGo.GetComponent<Canvas>();
+            _canvas.sortingOrder = short.MaxValue;
 
             CanvasScaler scaler = canvasGo.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920f, 1080f);
             scaler.matchWidthOrHeight = 0.5f;
 
-            _panel = _widgets.CreatePanel("Panel", canvasGo.transform, new Color(0.02f, 0.025f, 0.035f, 0.97f));
+            ApplyCanvasPlacement();
+
+            Color panelColor = _widgets.Theme.Panel;
+            panelColor.a = _service.Settings.PanelOpacity;
+            _panel = _widgets.CreatePanel("Panel", canvasGo.transform, panelColor);
             RectTransform panelRect = _panel.GetComponent<RectTransform>();
             HeliosWidgetFactory.Anchor(panelRect, Vector2.zero, Vector2.one, new Vector2(64f, 48f), new Vector2(-64f, -48f));
 
-            GameObject header = _widgets.CreatePanel("Header", _panel.transform, new Color(0.08f, 0.1f, 0.14f, 0.98f));
+            GameObject header = _widgets.CreatePanel("Header", _panel.transform, _widgets.Theme.Header);
             RectTransform headerRect = header.GetComponent<RectTransform>();
             HeliosWidgetFactory.Anchor(headerRect, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -60f), Vector2.zero);
             Text title = _widgets.CreateText("Title", header.transform, "HeliosDebugger", 22, TextAnchor.MiddleLeft);
@@ -129,7 +176,7 @@ namespace HeliosDebugger
             Button close = _widgets.CreateButton("Close", header.transform, "Close", () => _service.Hide());
             HeliosWidgetFactory.Anchor(close.GetComponent<RectTransform>(), new Vector2(1f, 0.1f), new Vector2(1f, 0.9f), new Vector2(-146f, 0f), new Vector2(-16f, 0f));
 
-            GameObject tabs = _widgets.CreatePanel("Tabs", _panel.transform, new Color(0.05f, 0.06f, 0.08f, 0.98f));
+            GameObject tabs = _widgets.CreatePanel("Tabs", _panel.transform, _widgets.Theme.Navigation);
             RectTransform tabsRect = tabs.GetComponent<RectTransform>();
             HeliosWidgetFactory.Anchor(tabsRect, new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0f), new Vector2(180f, -60f));
             VerticalLayoutGroup tabLayout = tabs.AddComponent<VerticalLayoutGroup>();
@@ -142,16 +189,25 @@ namespace HeliosDebugger
             ScrollRect scroll = _widgets.CreateScrollView("ContentScroll", _panel.transform, out _content);
             HeliosWidgetFactory.Anchor(scroll.GetComponent<RectTransform>(), new Vector2(0f, 0f), Vector2.one, new Vector2(188f, 8f), new Vector2(-8f, -68f));
 
-            _trigger = _widgets.CreateButton("Trigger", canvasGo.transform, "H", OnTriggerClicked).gameObject;
+            _overlayRoot = _widgets.CreatePanel("Overlays", canvasGo.transform, Color.clear);
+            HeliosWidgetFactory.Stretch(_overlayRoot.GetComponent<RectTransform>());
+            _overlayRoot.GetComponent<Image>().raycastTarget = false;
+
+            _trigger = _widgets.CreateButton("Trigger", canvasGo.transform, _service.Settings.TriggerLabel, OnTriggerClicked).gameObject;
             RectTransform triggerRect = _trigger.GetComponent<RectTransform>();
-            triggerRect.anchorMin = new Vector2(1f, 0f);
-            triggerRect.anchorMax = new Vector2(1f, 0f);
-            triggerRect.pivot = new Vector2(1f, 0f);
-            triggerRect.anchoredPosition = new Vector2(-18f, 18f);
-            triggerRect.sizeDelta = new Vector2(54f, 54f);
+            ApplyTriggerLayout(triggerRect);
+            if (_service.Settings.TriggerActivation == HeliosTriggerActivation.TapAndHold)
+            {
+                HeliosHoldTrigger hold = _trigger.AddComponent<HeliosHoldTrigger>();
+                hold.Duration = _service.Settings.TriggerHoldDuration;
+                hold.Invoked = () => _service.Toggle();
+            }
+
+            BuildChallengePanel(canvasGo.transform);
 
             RebuildTabs();
             RebuildActiveTab();
+            RebuildOverlays();
         }
 
         private void RebuildTabs()
@@ -186,11 +242,16 @@ namespace HeliosDebugger
 
             if (_trigger != null)
                 _trigger.SetActive(_service.Settings.ShowTrigger && !_service.IsVisible);
+            if (_overlayRoot != null)
+                _overlayRoot.SetActive(!_service.IsVisible && (_challengePanel == null || !_challengePanel.activeSelf));
         }
 
         private void OnTriggerClicked()
         {
-            if (!_service.Settings.RequireTripleTap)
+            HeliosTriggerActivation activation = _service.Settings.TriggerActivation;
+            if (activation == HeliosTriggerActivation.TapAndHold)
+                return;
+            if (activation == HeliosTriggerActivation.SingleTap)
             {
                 _service.Toggle();
                 return;
@@ -203,7 +264,8 @@ namespace HeliosDebugger
             _lastTriggerTapTime = now;
             _triggerTapCount++;
 
-            if (_triggerTapCount >= 3)
+            int requiredTaps = activation == HeliosTriggerActivation.DoubleTap ? 2 : 3;
+            if (_triggerTapCount >= requiredTaps)
             {
                 _triggerTapCount = 0;
                 _service.Toggle();
@@ -213,17 +275,33 @@ namespace HeliosDebugger
         private void PollKeyboardAndGamepad()
         {
             Keyboard keyboard = Keyboard.current;
+            Gamepad gamepad = Gamepad.current;
+            HeliosShortcutContext shortcutContext = new HeliosShortcutContext(_service, keyboard, gamepad);
+            for (int i = 0; i < _service.Shortcuts.Count; i++)
+            {
+                if (_service.Shortcuts[i].TryHandle(shortcutContext))
+                    return;
+            }
+
             if (keyboard != null)
             {
+                if (_service.IsVisible && _service.Settings.CloseOnEscape && keyboard.escapeKey.wasPressedThisFrame)
+                {
+                    _service.Hide();
+                    return;
+                }
+
                 Key key = ToInputKey(_service.Settings.ToggleKey);
                 if (key != Key.None && keyboard[key].wasPressedThisFrame)
                     _service.Toggle();
+
+                if (_service.IsVisible)
+                    PollTabShortcuts(keyboard);
 
                 if (_service.Settings.EnableKonamiCode)
                     PollKonami(keyboard);
             }
 
-            Gamepad gamepad = Gamepad.current;
             if (_service.Settings.EnableGamepadCombo && gamepad != null &&
                 gamepad.startButton.wasPressedThisFrame && gamepad.selectButton.isPressed)
             {
@@ -310,6 +388,153 @@ namespace HeliosDebugger
                 case KeyCode.Tab: return Key.Tab;
                 default: return Key.None;
             }
+        }
+
+        private void RegisterBuiltInOverlays()
+        {
+            if (_service.Settings.ShowPinnedOverlay)
+                _service.RegisterOverlay(new HeliosPinnedOptionsOverlay());
+            if (_service.Settings.ShowDockedConsole)
+                _service.RegisterOverlay(new HeliosDockedConsoleOverlay());
+            if (_service.Settings.ShowDockedProfiler)
+                _service.RegisterOverlay(new HeliosDockedProfilerOverlay());
+        }
+
+        private void PollTabShortcuts(Keyboard keyboard)
+        {
+            int index = -1;
+            if (keyboard.digit1Key.wasPressedThisFrame) index = 0;
+            else if (keyboard.digit2Key.wasPressedThisFrame) index = 1;
+            else if (keyboard.digit3Key.wasPressedThisFrame) index = 2;
+            else if (keyboard.digit4Key.wasPressedThisFrame) index = 3;
+            else if (keyboard.digit5Key.wasPressedThisFrame) index = 4;
+
+            if (index < 0 || index >= _service.Tabs.Count)
+                return;
+            _service.OpenTab(_service.Tabs[index].GetType());
+            RebuildActiveTab();
+        }
+
+        private void ApplyTriggerLayout(RectTransform rect)
+        {
+            HeliosTriggerCorner corner = _service.Settings.TriggerCorner;
+            bool right = corner == HeliosTriggerCorner.BottomRight || corner == HeliosTriggerCorner.TopRight;
+            bool top = corner == HeliosTriggerCorner.TopLeft || corner == HeliosTriggerCorner.TopRight;
+            Vector2 anchor = new Vector2(right ? 1f : 0f, top ? 1f : 0f);
+            rect.anchorMin = anchor;
+            rect.anchorMax = anchor;
+            rect.pivot = anchor;
+
+            Vector2 offset = _service.Settings.TriggerOffset;
+            rect.anchoredPosition = new Vector2(right ? -offset.x : offset.x, top ? -offset.y : offset.y);
+            rect.sizeDelta = _service.Settings.TriggerSize;
+        }
+
+        private void ApplyCanvasPlacement()
+        {
+            if (_canvas == null)
+                return;
+
+            RectTransform rect = _canvas.GetComponent<RectTransform>();
+            HeliosCanvasPlacement placement = _service.Settings.CanvasPlacement;
+            if (placement == HeliosCanvasPlacement.WorldSpace)
+            {
+                _canvas.renderMode = RenderMode.WorldSpace;
+                _canvas.worldCamera = _canvasCamera != null ? _canvasCamera : Camera.main;
+                _canvas.transform.SetParent(_worldSpaceAnchor != null ? _worldSpaceAnchor : transform, false);
+                rect.sizeDelta = new Vector2(1920f, 1080f);
+                rect.localPosition = Vector3.zero;
+                rect.localRotation = Quaternion.identity;
+                rect.localScale = Vector3.one * _service.Settings.WorldSpaceScale;
+                return;
+            }
+
+            _canvas.transform.SetParent(transform, false);
+            rect.localScale = Vector3.one;
+            if (placement == HeliosCanvasPlacement.ScreenSpaceCamera)
+            {
+                _canvas.renderMode = RenderMode.ScreenSpaceCamera;
+                _canvas.worldCamera = _canvasCamera != null ? _canvasCamera : Camera.main;
+                _canvas.planeDistance = 10f;
+            }
+            else
+            {
+                _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                _canvas.worldCamera = null;
+            }
+        }
+
+        private void BuildChallengePanel(Transform canvasRoot)
+        {
+            _challengePanel = _widgets.CreatePanel("AccessChallenge", canvasRoot, new Color(0f, 0f, 0f, 0.78f));
+            HeliosWidgetFactory.Stretch(_challengePanel.GetComponent<RectTransform>());
+
+            GameObject card = _widgets.CreatePanel("Card", _challengePanel.transform, _widgets.Theme.Header);
+            RectTransform cardRect = card.GetComponent<RectTransform>();
+            HeliosWidgetFactory.Anchor(
+                cardRect,
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(-220f, -100f),
+                new Vector2(220f, 100f));
+
+            Text title = _widgets.CreateText("Title", card.transform, "Helios access", 20, TextAnchor.MiddleCenter);
+            HeliosWidgetFactory.Anchor(title.rectTransform, new Vector2(0f, 0.7f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
+
+            _challengeInput = _widgets.CreateInput("Pin", card.transform, "PIN", null);
+            _challengeInput.contentType = InputField.ContentType.Password;
+            HeliosWidgetFactory.Anchor(
+                _challengeInput.GetComponent<RectTransform>(),
+                new Vector2(0.08f, 0.43f),
+                new Vector2(0.7f, 0.66f),
+                Vector2.zero,
+                Vector2.zero);
+
+            Button unlock = _widgets.CreateButton("Unlock", card.transform, "Unlock", SubmitChallenge);
+            HeliosWidgetFactory.Anchor(
+                unlock.GetComponent<RectTransform>(),
+                new Vector2(0.72f, 0.43f),
+                new Vector2(0.92f, 0.66f),
+                Vector2.zero,
+                Vector2.zero);
+
+            _challengeStatus = _widgets.CreateText("Status", card.transform, string.Empty, 13, TextAnchor.MiddleCenter);
+            HeliosWidgetFactory.Anchor(
+                _challengeStatus.rectTransform,
+                new Vector2(0.08f, 0.12f),
+                new Vector2(0.92f, 0.38f),
+                Vector2.zero,
+                Vector2.zero);
+            _challengePanel.SetActive(false);
+        }
+
+        private void OnAccessChallengeRequested(HeliosAccessRequest request)
+        {
+            if (_challengePanel == null)
+                return;
+            _challengeInput.text = string.Empty;
+            _challengeStatus.text = "Enter the configured PIN.";
+            _challengePanel.SetActive(true);
+            if (_panel != null)
+                _panel.SetActive(false);
+            if (_overlayRoot != null)
+                _overlayRoot.SetActive(false);
+            _challengeInput.ActivateInputField();
+        }
+
+        private void SubmitChallenge()
+        {
+            if (_service.TryUnlock(_challengeInput.text))
+            {
+                _challengePanel.SetActive(false);
+                OnVisibilityChanged();
+                RebuildActiveTab();
+                return;
+            }
+
+            _challengeStatus.text = "Invalid PIN.";
+            _challengeInput.text = string.Empty;
+            _challengeInput.ActivateInputField();
         }
 
         private static void EnsureEventSystem()

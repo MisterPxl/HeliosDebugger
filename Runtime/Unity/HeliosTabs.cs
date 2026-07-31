@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,13 +11,24 @@ namespace HeliosDebugger
 {
     public sealed class HeliosConsoleTab : HeliosTabBase
     {
-        private RectTransform _list;
-        private string _search = string.Empty;
+        private readonly HeliosLogFilter _filter = new HeliosLogFilter();
+        private HeliosLogQuery _query;
+        private HeliosVirtualizedLogList _list;
+        private ScrollRect _scroll;
+        private Text _detail;
+        private Text _status;
         private bool _paused;
         private int _lastCount = -1;
+        private HeliosLogViewEntry _selected;
 
         public override string Title => "Console";
         public override int Order => 0;
+
+        public override void Initialize(HeliosContext context)
+        {
+            base.Initialize(context);
+            _query = new HeliosLogQuery(context.Service.Logs);
+        }
 
         protected override void BuildContent(HeliosWidgetFactory widgets, Transform parent)
         {
@@ -28,91 +40,138 @@ namespace HeliosDebugger
             {
                 Context.Service.Logs.Clear();
                 _lastCount = -1;
-                RebuildList();
+                RebuildList(false);
             });
-            widgets.CreateButton("Pause", controls.transform, "Pause", () => _paused = !_paused);
+            Button pause = widgets.CreateButton("Pause", controls.transform, "Pause", null);
+            Text pauseLabel = pause.GetComponentInChildren<Text>();
+            pause.onClick.AddListener(() =>
+            {
+                _paused = !_paused;
+                pauseLabel.text = _paused ? "Resume" : "Pause";
+            });
             InputField search = widgets.CreateInput("Search", controls.transform, "Search logs", value =>
             {
-                _search = value ?? string.Empty;
+                _filter.Search = value ?? string.Empty;
                 _lastCount = -1;
-                RebuildList();
+                RebuildList(false);
             });
             widgets.AddLayout(search.gameObject, 36f);
 
-            ScrollRect scroll = widgets.CreateScrollView("ConsoleList", parent, out _list);
-            widgets.AddLayout(scroll.gameObject, 760f, 320f);
+            GameObject filters = widgets.CreatePanel("ConsoleFilters", parent, new Color(0f, 0f, 0f, 0f));
+            filters.AddComponent<HorizontalLayoutGroup>().spacing = 6f;
+            widgets.AddLayout(filters, 38f);
+            CreateLevelButton(filters.transform, "Log", HeliosLogLevelMask.Log);
+            CreateLevelButton(filters.transform, "Warn", HeliosLogLevelMask.Warning);
+            CreateLevelButton(filters.transform, "Error", HeliosLogLevelMask.Error);
+            CreateLevelButton(filters.transform, "Exception", HeliosLogLevelMask.Exception);
+            CreateLevelButton(filters.transform, "Assert", HeliosLogLevelMask.Assert);
+
+            Button collapse = widgets.CreateButton("Collapse", filters.transform, "Collapse: Off", null);
+            Text collapseLabel = collapse.GetComponentInChildren<Text>();
+            collapse.onClick.AddListener(() =>
+            {
+                _filter.CollapseDuplicates = !_filter.CollapseDuplicates;
+                collapseLabel.text = _filter.CollapseDuplicates ? "Collapse: On" : "Collapse: Off";
+                RebuildList(false);
+            });
+            widgets.CreateButton("Copy", filters.transform, "Copy", CopyVisible);
+            widgets.CreateButton("Export", filters.transform, "Export", ExportVisible);
+
+            _scroll = widgets.CreateScrollView("ConsoleList", parent, out RectTransform content);
+            widgets.AddLayout(_scroll.gameObject, 480f, 260f);
+            _list = _scroll.gameObject.AddComponent<HeliosVirtualizedLogList>();
+            _list.Initialize(_scroll, content, widgets, 32f, SelectEntry);
+
+            _detail = widgets.CreateText("LogDetail", parent, "Select a log entry to inspect its full message and stack trace.", 13, TextAnchor.UpperLeft);
+            widgets.AddLayout(_detail.gameObject, 150f, 100f);
+
+            GameObject detailControls = widgets.CreatePanel("DetailControls", parent, new Color(0f, 0f, 0f, 0f));
+            detailControls.AddComponent<HorizontalLayoutGroup>().spacing = 6f;
+            widgets.AddLayout(detailControls, 36f);
+            widgets.CreateButton("CopyMessage", detailControls.transform, "Copy Message", () =>
+            {
+                if (_selected != null)
+                    GUIUtility.systemCopyBuffer = _selected.Representative.Message;
+            });
+            widgets.CreateButton("CopyStack", detailControls.transform, "Copy Stack", () =>
+            {
+                if (_selected != null)
+                    GUIUtility.systemCopyBuffer = _selected.Representative.StackTrace;
+            });
+            _status = widgets.CreateText("ConsoleStatus", detailControls.transform, string.Empty, 12);
+            widgets.AddLayout(_status.gameObject, -1f, 28f);
+            RebuildList(true);
         }
 
         public override void Refresh()
         {
-            if (_paused || _list == null)
+            if (_paused || _list == null || _query == null)
                 return;
 
             int count = Context.Service.Logs.Snapshot().Count;
             if (count != _lastCount)
-                RebuildList();
+                RebuildList(true);
         }
 
-        private void RebuildList()
+        private void RebuildList(bool preserveBottom)
         {
-            if (_list == null)
+            if (_list == null || _query == null)
                 return;
 
-            Widgets.Clear(_list);
-            IReadOnlyList<HeliosLogEntry> logs = Context.Service.Logs.Snapshot();
-            int shown = 0;
-            int start = Mathf.Max(0, logs.Count - 80);
+            bool stickToBottom = preserveBottom && (_lastCount < 0 || _scroll.verticalNormalizedPosition <= 0.02f);
+            IReadOnlyList<HeliosLogViewEntry> entries = _query.Execute(_filter);
+            _list.SetEntries(entries, stickToBottom);
+            _lastCount = Context.Service.Logs.Snapshot().Count;
+            if (_status != null)
+                _status.text = $"{entries.Count} visible / {_lastCount} captured";
+        }
 
-            for (int i = start; i < logs.Count; i++)
+        private void CreateLevelButton(Transform parent, string label, HeliosLogLevelMask level)
+        {
+            Button button = Widgets.CreateButton($"Filter_{level}", parent, $"[x] {label}", null);
+            Text text = button.GetComponentInChildren<Text>();
+            button.onClick.AddListener(() =>
             {
-                HeliosLogEntry entry = logs[i];
-                if (!MatchesSearch(entry))
-                    continue;
+                bool enabled = (_filter.Levels & level) != 0;
+                _filter.Levels = enabled ? _filter.Levels & ~level : _filter.Levels | level;
+                text.text = enabled ? $"[ ] {label}" : $"[x] {label}";
+                RebuildList(false);
+            });
+        }
 
-                Text text = Widgets.CreateText(
-                    $"Log_{entry.Sequence}",
-                    _list,
-                    Format(entry),
-                    13,
-                    TextAnchor.UpperLeft);
-                text.color = ColorFor(entry.Level);
-                Widgets.AddLayout(text.gameObject, -1f, 28f);
-                shown++;
+        private void SelectEntry(HeliosLogViewEntry entry)
+        {
+            _selected = entry;
+            HeliosLogEntry log = entry.Representative;
+            string count = entry.Count > 1 ? $"\nOccurrences: {entry.Count}" : string.Empty;
+            _detail.text = $"[{log.Timestamp:O}] [{log.Level}] {log.Message}{count}\n\n{log.StackTrace}";
+        }
+
+        private void CopyVisible()
+        {
+            if (_query == null)
+                return;
+            GUIUtility.systemCopyBuffer = _query.Export(_filter);
+            if (_status != null)
+                _status.text = "Visible logs copied.";
+        }
+
+        private void ExportVisible()
+        {
+            if (_query == null)
+                return;
+
+            try
+            {
+                string directory = Path.Combine(Application.persistentDataPath, "HeliosLogs");
+                Directory.CreateDirectory(directory);
+                string path = Path.Combine(directory, $"logs_{DateTime.UtcNow:yyyyMMdd_HHmmss}.txt");
+                File.WriteAllText(path, _query.Export(_filter));
+                _status.text = path;
             }
-
-            if (shown == 0)
-                Widgets.CreateText("Empty", _list, "No logs match the current filter.", 14);
-
-            _lastCount = logs.Count;
-        }
-
-        private bool MatchesSearch(HeliosLogEntry entry)
-        {
-            if (string.IsNullOrWhiteSpace(_search))
-                return true;
-
-            return entry.Message.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                   entry.Category.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                   entry.Level.ToString().IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0;
-        }
-
-        private static string Format(HeliosLogEntry entry)
-        {
-            string category = string.IsNullOrEmpty(entry.Category) ? string.Empty : $"[{entry.Category}]";
-            string stack = string.IsNullOrEmpty(entry.StackTrace) ? string.Empty : $"\n{HeliosWidgetFactory.Truncate(entry.StackTrace, 500)}";
-            return $"[{entry.Timestamp:HH:mm:ss.fff}][{entry.Level}]{category} {HeliosWidgetFactory.Truncate(entry.Message, 900)}{stack}";
-        }
-
-        private static Color ColorFor(HeliosLogLevel level)
-        {
-            switch (level)
+            catch (Exception exception)
             {
-                case HeliosLogLevel.Warning: return new Color(1f, 0.78f, 0.32f);
-                case HeliosLogLevel.Error:
-                case HeliosLogLevel.Exception:
-                case HeliosLogLevel.Assert: return new Color(1f, 0.38f, 0.32f);
-                case HeliosLogLevel.Log:
-                default: return Color.white;
+                _status.text = $"Export failed: {exception.Message}";
             }
         }
     }
@@ -129,6 +188,7 @@ namespace HeliosDebugger
         private Text _reservedValue;
         private Text _gcValue;
         private Text _drawCallsValue;
+        private Text _scriptsValue;
         private Text _status;
         private Image _managedFill;
         private Image _reservedFill;
@@ -148,15 +208,17 @@ namespace HeliosDebugger
             widgets.CreateButton("GCCollect", controls.transform, "GC Collect", CollectGarbage);
             _cleanButton = widgets.CreateButton("Clean", controls.transform, "Clean", CleanUnusedAssets);
 
-            _graph = widgets.CreateTimeSeriesGraph("FrameGraph", parent, new Color(0.04f, 0.05f, 0.07f, 0.96f));
+            _graph = widgets.CreateTimeSeriesGraph("FrameGraph", parent, widgets.Theme.Navigation);
+            Color gridColor = widgets.Theme.MutedText;
+            gridColor.a = 0.2f;
             _graph.Configure(
                 33.33f,
                 16.67f,
                 33.33f,
-                new Color(0.2f, 0.74f, 1f, 0.95f),
-                new Color(0.78f, 0.82f, 0.16f, 0.95f),
-                new Color(1f, 0.44f, 0.22f, 0.95f),
-                new Color(1f, 1f, 1f, 0.16f));
+                widgets.Theme.Accent,
+                widgets.Theme.Warning,
+                widgets.Theme.Error,
+                gridColor);
             widgets.AddLayout(_graph.transform.parent.gameObject, 260f, 180f);
 
             GameObject primaryMetrics = widgets.CreatePanel("PrimaryMetrics", parent, new Color(0f, 0f, 0f, 0f));
@@ -187,9 +249,10 @@ namespace HeliosDebugger
             SetFlexibleWidth(widgets.CreateMetricCard("ReservedValueCard", detailMetrics.transform, "Reserved", out _reservedValue));
             SetFlexibleWidth(widgets.CreateMetricCard("GcCard", detailMetrics.transform, "GC / Frame", out _gcValue));
             SetFlexibleWidth(widgets.CreateMetricCard("DrawCallsCard", detailMetrics.transform, "Draw Calls", out _drawCallsValue));
+            SetFlexibleWidth(widgets.CreateMetricCard("ScriptsCard", detailMetrics.transform, "Scripts", out _scriptsValue));
 
             _status = widgets.CreateText("ProfilerStatus", parent, "Profiler warming up...", 14);
-            _status.color = new Color(1f, 1f, 1f, 0.72f);
+            _status.color = widgets.Theme.MutedText;
             widgets.AddLayout(_status.gameObject, 34f);
         }
 
@@ -221,6 +284,7 @@ namespace HeliosDebugger
             _reservedValue.text = HeliosWidgetFactory.FormatBytes(latest.ReservedMemory);
             _gcValue.text = HeliosWidgetFactory.FormatBytes(latest.GcAllocated);
             _drawCallsValue.text = HeliosWidgetFactory.FormatValue(latest.DrawCalls);
+            _scriptsValue.text = latest.ScriptsTime < 0L ? "Unavailable" : $"{latest.ScriptsTime / 1000000f:F2} ms";
 
             SetFill(_managedFill, latest.ManagedMemory, latest.UsedMemory);
             SetFill(_reservedFill, latest.UsedMemory, latest.ReservedMemory);
@@ -281,7 +345,7 @@ namespace HeliosDebugger
 
         private GameObject CreateMemoryCard(HeliosWidgetFactory widgets, string name, Transform parent, string title, out Text value, out Image fill)
         {
-            GameObject card = widgets.CreatePanel(name, parent, new Color(0.07f, 0.09f, 0.12f, 0.96f));
+            GameObject card = widgets.CreatePanel(name, parent, widgets.Theme.Input);
             VerticalLayoutGroup layout = card.AddComponent<VerticalLayoutGroup>();
             layout.padding = new RectOffset(10, 10, 8, 8);
             layout.spacing = 6f;
@@ -290,17 +354,19 @@ namespace HeliosDebugger
             layout.childForceExpandHeight = false;
 
             Text titleText = widgets.CreateText("Title", card.transform, title, 13);
-            titleText.color = new Color(1f, 1f, 1f, 0.58f);
+            titleText.color = widgets.Theme.MutedText;
             widgets.AddLayout(titleText.gameObject, 22f);
 
             value = widgets.CreateText("Value", card.transform, "--", 20);
             widgets.AddLayout(value.gameObject, 30f);
 
+            Color barBackground = widgets.Theme.MutedText;
+            barBackground.a = 0.12f;
             fill = widgets.CreateFillBar(
                 "UsageBar",
                 card.transform,
-                new Color(1f, 1f, 1f, 0.12f),
-                new Color(0.2f, 0.74f, 1f, 0.92f));
+                barBackground,
+                widgets.Theme.Accent);
             widgets.AddLayout(fill.transform.parent.gameObject, 18f);
             return card;
         }
@@ -328,13 +394,13 @@ namespace HeliosDebugger
             layout.flexibleWidth = 1f;
         }
 
-        private static Color ColorForFrame(float frameMs)
+        private Color ColorForFrame(float frameMs)
         {
             if (frameMs >= 33.33f)
-                return new Color(1f, 0.44f, 0.22f);
+                return Widgets.Theme.Error;
             if (frameMs >= 16.67f)
-                return new Color(0.78f, 0.82f, 0.16f);
-            return new Color(0.2f, 0.74f, 1f);
+                return Widgets.Theme.Warning;
+            return Widgets.Theme.Accent;
         }
     }
 
@@ -342,7 +408,7 @@ namespace HeliosDebugger
     {
         private const int ForceRebuildRevision = -1;
 
-        private readonly List<OptionValueBinding> _valueBindings = new List<OptionValueBinding>();
+        private readonly List<Action> _refreshBindings = new List<Action>();
         private RectTransform _content;
         private string _search = string.Empty;
         private int _lastRevision = ForceRebuildRevision;
@@ -433,14 +499,14 @@ namespace HeliosDebugger
             if (_content == null)
                 return;
 
-            _valueBindings.Clear();
+            _refreshBindings.Clear();
             Widgets.Clear(_content);
             List<OptionTabEntry> entries = new List<OptionTabEntry>();
             IReadOnlyList<IHeliosValueOption> options = Context.Service.Options.Options;
             for (int i = 0; i < options.Count; i++)
             {
                 IHeliosValueOption option = options[i];
-                if (Matches(option.DisplayName, option.Category))
+                if (Matches(option.DisplayName, option.Category, option.Description))
                     entries.Add(new OptionTabEntry(option));
             }
 
@@ -448,7 +514,7 @@ namespace HeliosDebugger
             for (int i = 0; i < reflected.Count; i++)
             {
                 IHeliosActionOption action = reflected[i];
-                if (Matches(action.DisplayName, action.Category))
+                if (Matches(action.DisplayName, action.Category, action.Description))
                     entries.Add(new OptionTabEntry(action));
             }
 
@@ -456,7 +522,7 @@ namespace HeliosDebugger
             for (int i = 0; i < actions.Count; i++)
             {
                 HeliosActionDefinition action = actions[i];
-                if (Matches(action.DisplayName, action.Category))
+                if (Matches(action.DisplayName, action.Category, action.Description))
                     entries.Add(new OptionTabEntry(action));
             }
 
@@ -477,8 +543,8 @@ namespace HeliosDebugger
 
         private void RefreshOptionValues()
         {
-            for (int i = 0; i < _valueBindings.Count; i++)
-                _valueBindings[i].Refresh();
+            for (int i = 0; i < _refreshBindings.Count; i++)
+                _refreshBindings[i]();
         }
 
         private void AddCategory(ref string currentCategory, string category)
@@ -489,108 +555,106 @@ namespace HeliosDebugger
 
             currentCategory = next;
             Text label = Widgets.CreateText($"Category_{next}", _content, next, 16);
-            label.color = new Color(0.68f, 0.86f, 1f);
+            label.color = Widgets.Theme.Accent;
             Widgets.AddLayout(label.gameObject, 30f);
         }
 
         private void AddOption(IHeliosValueOption option)
         {
-            GameObject row = Widgets.CreatePanel($"Option_{option.DisplayName}", _content, new Color(0.08f, 0.1f, 0.13f, 0.96f));
+            bool hasDescription = !string.IsNullOrWhiteSpace(option.Description);
+            GameObject card = Widgets.CreatePanel($"Option_{option.DisplayName}", _content, Widgets.Theme.Row);
+            VerticalLayoutGroup cardLayout = card.AddComponent<VerticalLayoutGroup>();
+            cardLayout.padding = new RectOffset(6, 6, 4, 4);
+            cardLayout.spacing = 3f;
+            cardLayout.childControlWidth = true;
+            cardLayout.childForceExpandWidth = true;
+            cardLayout.childForceExpandHeight = false;
+            Widgets.AddLayout(card, hasDescription ? 70f : 48f);
+
+            GameObject row = Widgets.CreatePanel("Controls", card.transform, Color.clear);
             HorizontalLayoutGroup layout = row.AddComponent<HorizontalLayoutGroup>();
             layout.spacing = 6f;
-            layout.padding = new RectOffset(6, 6, 4, 4);
-            Widgets.AddLayout(row, 44f);
+            layout.childControlHeight = true;
+            layout.childControlWidth = true;
+            layout.childForceExpandHeight = true;
+            layout.childForceExpandWidth = true;
+            Widgets.AddLayout(row, 38f);
 
             Text label = Widgets.CreateText("Label", row.transform, option.DisplayName, 14);
             Widgets.AddLayout(label.gameObject, -1f, 32f);
-            InputField stringInput = null;
-            if (!option.IsReadOnly && option.ValueKind == HeliosOptionValueKind.String)
-            {
-                stringInput = Widgets.CreateInput("Value", row.transform, option.GetDisplayValue(), null);
-                stringInput.text = option.GetDisplayValue();
-                stringInput.onEndEdit.AddListener(text =>
-                {
-                    option.TrySetFromString(text);
-                    if (stringInput != null)
-                        stringInput.text = option.GetDisplayValue();
-                });
-                Widgets.AddLayout(stringInput.gameObject, -1f, 32f);
-            }
-            else
-            {
-                Text value = Widgets.CreateText("Value", row.transform, option.GetDisplayValue(), 14, TextAnchor.MiddleRight);
-                Widgets.AddLayout(value.gameObject, -1f, 32f);
-                _valueBindings.Add(new OptionValueBinding(option, value));
-            }
 
-            if (option.IsReadOnly)
-                return;
+            IHeliosOptionControlBuilder builder = FindControlBuilder(option);
+            HeliosOptionControlContext controlContext = new HeliosOptionControlContext(
+                Widgets,
+                row.transform,
+                refresh => _refreshBindings.Add(refresh));
+            builder.Build(controlContext, option);
 
-            if (option.ValueKind == HeliosOptionValueKind.Boolean)
+            if (!option.IsReadOnly)
             {
-                Widgets.CreateButton("Toggle", row.transform, "Toggle", () =>
+                Widgets.CreateButton("Reset", row.transform, "Reset", () =>
                 {
-                    option.ToggleBoolean();
-                    RefreshOptionValues();
-                });
-            }
-            else if (option.ValueKind == HeliosOptionValueKind.Enum)
-            {
-                Widgets.CreateButton("Cycle", row.transform, "Next", () =>
-                {
-                    option.CycleEnum();
-                    RefreshOptionValues();
-                });
-            }
-            else if (option.ValueKind == HeliosOptionValueKind.Integer || option.ValueKind == HeliosOptionValueKind.Float)
-            {
-                Widgets.CreateButton("Minus", row.transform, "-", () =>
-                {
-                    option.Adjust(-1f);
-                    RefreshOptionValues();
-                });
-                Widgets.CreateButton("Plus", row.transform, "+", () =>
-                {
-                    option.Adjust(1f);
+                    option.Reset();
                     RefreshOptionValues();
                 });
             }
 
-            Widgets.CreateButton("Reset", row.transform, "Reset", () =>
+            if (hasDescription)
             {
-                option.Reset();
-                if (stringInput != null)
-                    stringInput.text = option.GetDisplayValue();
-                RefreshOptionValues();
-            });
+                Text description = Widgets.CreateText("Description", card.transform, option.Description, 12);
+                description.color = Widgets.Theme.MutedText;
+                Widgets.AddLayout(description.gameObject, 22f);
+            }
+        }
+
+        private IHeliosOptionControlBuilder FindControlBuilder(IHeliosValueOption option)
+        {
+            IReadOnlyList<IHeliosOptionControlBuilder> builders = Context.Service.OptionControlBuilders;
+            for (int i = 0; i < builders.Count; i++)
+            {
+                if (builders[i].CanBuild(option))
+                    return builders[i];
+            }
+
+            throw new InvalidOperationException($"No Helios option control can render {option.ValueType.FullName}.");
         }
 
         private void AddAction(IHeliosActionOption action)
         {
             if (action.Parameters.Count == 0)
             {
-                Button button = Widgets.CreateButton($"Action_{action.DisplayName}", _content, action.Pin ? $"Pinned: {action.DisplayName}" : action.DisplayName, () =>
+                string label = string.IsNullOrWhiteSpace(action.Description)
+                    ? action.DisplayName
+                    : $"{action.DisplayName}\n{action.Description}";
+                Button button = Widgets.CreateButton($"Action_{action.DisplayName}", _content, label, () =>
                 {
                     HeliosActionResult result = action.Invoke();
                     if (!result.Success)
                         UnityEngine.Debug.LogWarning($"Helios action failed: {result.Message}");
                 });
-                Widgets.AddLayout(button.gameObject, 40f);
+                Widgets.AddLayout(button.gameObject, string.IsNullOrWhiteSpace(action.Description) ? 40f : 58f);
                 return;
             }
 
-            GameObject card = Widgets.CreatePanel($"Action_{action.DisplayName}", _content, new Color(0.08f, 0.1f, 0.13f, 0.96f));
+            GameObject card = Widgets.CreatePanel($"Action_{action.DisplayName}", _content, Widgets.Theme.Row);
             VerticalLayoutGroup layout = card.AddComponent<VerticalLayoutGroup>();
             layout.spacing = 6f;
             layout.padding = new RectOffset(8, 8, 6, 6);
             layout.childControlWidth = true;
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
-            Widgets.AddLayout(card, Mathf.Max(96f, 84f + action.Parameters.Count * 42f));
+            float descriptionHeight = string.IsNullOrWhiteSpace(action.Description) ? 0f : 24f;
+            Widgets.AddLayout(card, Mathf.Max(96f, 84f + descriptionHeight + action.Parameters.Count * 42f));
 
-            Text title = Widgets.CreateText("Title", card.transform, action.Pin ? $"Pinned: {action.DisplayName}" : action.DisplayName, 14);
-            title.color = new Color(0.9f, 0.96f, 1f);
+            Text title = Widgets.CreateText("Title", card.transform, action.DisplayName, 14);
+            title.color = Widgets.Theme.Text;
             Widgets.AddLayout(title.gameObject, 24f);
+            if (!string.IsNullOrWhiteSpace(action.Description))
+            {
+                Text description = Widgets.CreateText("Description", card.transform, action.Description, 12);
+                description.color = Widgets.Theme.MutedText;
+                Widgets.AddLayout(description.gameObject, 22f);
+            }
 
             List<Func<string>> valueReaders = new List<Func<string>>(action.Parameters.Count);
             for (int i = 0; i < action.Parameters.Count; i++)
@@ -830,36 +894,19 @@ namespace HeliosDebugger
             return left.IsAction.CompareTo(right.IsAction);
         }
 
-        private bool Matches(string displayName, string category)
+        private bool Matches(string displayName, string category, string description)
         {
             if (string.IsNullOrWhiteSpace(_search))
                 return true;
 
             return displayName.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                   (!string.IsNullOrEmpty(category) && category.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0);
+                   (!string.IsNullOrEmpty(category) && category.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                   (!string.IsNullOrEmpty(description) && description.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0);
         }
 
         private static string NormalizeCategory(string category)
         {
             return string.IsNullOrEmpty(category) ? "General" : category;
-        }
-
-        private sealed class OptionValueBinding
-        {
-            private readonly IHeliosValueOption _option;
-            private readonly Text _text;
-
-            public OptionValueBinding(IHeliosValueOption option, Text text)
-            {
-                _option = option;
-                _text = text;
-            }
-
-            public void Refresh()
-            {
-                if (_text != null)
-                    _text.text = _option.GetDisplayValue();
-            }
         }
 
         private sealed class OptionTabEntry
@@ -883,22 +930,36 @@ namespace HeliosDebugger
         }
     }
 
-    public sealed class HeliosSystemInfoTab : HeliosTabBase
+    public sealed class HeliosSystemInfoTab : HeliosTabBase, IHeliosTabOpenHandler
     {
         private Text _info;
         private float _lastRefresh;
+        private bool _accessGranted;
 
         public override string Title => "System";
         public override int Order => 30;
 
         protected override void BuildContent(HeliosWidgetFactory widgets, Transform parent)
         {
-            _info = widgets.CreateText("SystemInfo", parent, string.Empty, 14, TextAnchor.UpperLeft);
+            _info = widgets.CreateText("SystemInfo", parent, "Access required.", 14, TextAnchor.UpperLeft);
+        }
+
+        public void OnOpened()
+        {
+            _accessGranted = false;
+            Context.Service.Access.Request(
+                new HeliosAccessRequest(HeliosAccessOperation.ViewSensitiveSystemInfo, "system"),
+                () =>
+                {
+                    _accessGranted = true;
+                    _lastRefresh = 0f;
+                    Refresh();
+                });
         }
 
         public override void Refresh()
         {
-            if (_info == null || Time.unscaledTime - _lastRefresh < 1f)
+            if (!_accessGranted || _info == null || Time.unscaledTime - _lastRefresh < 1f)
                 return;
 
             _lastRefresh = Time.unscaledTime;
@@ -910,7 +971,8 @@ namespace HeliosDebugger
     {
         private InputField _description;
         private Text _status;
-        private HeliosBugReport _lastReport;
+        private HeliosReportBundle _lastReport;
+        private HeliosReportCancellationSource _cancellation;
 
         public override string Title => "Bug Reporter";
         public override int Order => 40;
@@ -926,9 +988,19 @@ namespace HeliosDebugger
             widgets.AddLayout(controls, 44f);
 
             widgets.CreateButton("Build", controls.transform, "Build Report", BuildReport);
-            widgets.CreateButton("Local", controls.transform, "Local", () => Submit(HeliosReportTransportKind.LocalExport));
-            widgets.CreateButton("Webhook", controls.transform, "Webhook", () => Submit(HeliosReportTransportKind.Webhook));
-            widgets.CreateButton("Share", controls.transform, "Share", () => Submit(HeliosReportTransportKind.NativeShare));
+            widgets.CreateButton("Default", controls.transform, "Submit Default", () => Submit(GetDefaultTransportId()));
+            widgets.CreateButton("Cancel", controls.transform, "Cancel", Cancel);
+            IReadOnlyList<IHeliosReportTransport> transports =
+                Context.Service.Reporting.Transports.GetAvailableTransports();
+            for (int i = 0; i < transports.Count; i++)
+            {
+                IHeliosReportTransport transport = transports[i];
+                widgets.CreateButton(
+                    $"Transport_{transport.Id.Value}",
+                    controls.transform,
+                    transport.DisplayName,
+                    () => Submit(transport.Id));
+            }
 
             _status = widgets.CreateText("Status", parent, "No report built yet.", 14);
             widgets.AddLayout(_status.gameObject, 60f);
@@ -936,40 +1008,78 @@ namespace HeliosDebugger
 
         private void BuildReport()
         {
-            _status.text = "Building report...";
-            Context.Root.Run(Context.Service.Reporting.BuildReport(_description.text, Context.Service.Settings, OnReportBuilt));
+            Context.Service.Access.Request(
+                new HeliosAccessRequest(HeliosAccessOperation.ViewSensitiveSystemInfo, "bug-report"),
+                BuildReportAllowed);
         }
 
-        private void Submit(HeliosReportTransportKind kind)
+        private void BuildReportAllowed()
         {
+            if (_status == null || _description == null)
+                return;
+            _cancellation = new HeliosReportCancellationSource();
+            _status.text = "Building report...";
+            Context.Root.Run(Context.Service.Reporting.BuildReport(
+                _description.text,
+                Context.Service.Settings.MaxReportBytes,
+                _cancellation.CreateContext(OnProgress),
+                OnReportBuilt));
+        }
+
+        private void Submit(HeliosTransportId id)
+        {
+            Context.Service.Access.Request(
+                new HeliosAccessRequest(HeliosAccessOperation.SubmitBugReport, id.Value),
+                () => SubmitAllowed(id));
+        }
+
+        private void SubmitAllowed(HeliosTransportId id)
+        {
+            if (_status == null)
+                return;
             if (_lastReport == null)
             {
-                BuildAndSubmit(kind);
+                Context.Service.Access.Request(
+                    new HeliosAccessRequest(HeliosAccessOperation.ViewSensitiveSystemInfo, "bug-report"),
+                    () => BuildAndSubmit(id));
                 return;
             }
 
-            IHeliosReportTransport transport = Context.Service.Reporting.GetTransport(kind);
+            IHeliosReportTransport transport = Context.Service.Reporting.GetTransport(id);
             if (transport == null)
             {
-                _status.text = $"Transport {kind} unavailable.";
+                _status.text = $"Transport {id.Value} unavailable.";
                 return;
             }
 
+            _cancellation = new HeliosReportCancellationSource();
             _status.text = $"Submitting via {transport.DisplayName}...";
-            Context.Root.Run(transport.Submit(_lastReport, Context.Service.Settings, OnReportSubmitted));
+            Context.Root.Run(Context.Service.Reporting.Submit(
+                id,
+                _lastReport,
+                _cancellation.CreateContext(OnProgress),
+                OnReportSubmitted));
         }
 
-        private void BuildAndSubmit(HeliosReportTransportKind kind)
+        private void BuildAndSubmit(HeliosTransportId id)
         {
+            if (_status == null || _description == null)
+                return;
+            _cancellation = new HeliosReportCancellationSource();
             _status.text = "Building report before submit...";
-            Context.Root.Run(BuildAndSubmitRoutine(kind));
+            Context.Root.Run(BuildAndSubmitRoutine(id));
         }
 
-        private IEnumerator BuildAndSubmitRoutine(HeliosReportTransportKind kind)
+        private IEnumerator BuildAndSubmitRoutine(HeliosTransportId id)
         {
-            HeliosBugReport built = null;
+            HeliosReportBundle built = null;
             HeliosReportResult buildResult = null;
-            yield return Context.Service.Reporting.BuildReport(_description.text, Context.Service.Settings, (report, result) =>
+            HeliosReportOperationContext operationContext = _cancellation.CreateContext(OnProgress);
+            yield return Context.Service.Reporting.BuildReport(
+                _description.text,
+                Context.Service.Settings.MaxReportBytes,
+                operationContext,
+                (report, result) =>
             {
                 built = report;
                 buildResult = result;
@@ -977,23 +1087,75 @@ namespace HeliosDebugger
 
             if (buildResult == null || !buildResult.Success)
             {
-                _status.text = buildResult != null ? buildResult.Message : "Report build failed.";
+                if (_status != null)
+                    _status.text = buildResult != null ? buildResult.Message : "Report build failed.";
                 yield break;
             }
 
             _lastReport = built;
-            Submit(kind);
+            if (_cancellation.IsCancellationRequested)
+                yield break;
+
+            yield return Context.Service.Reporting.Submit(
+                id,
+                _lastReport,
+                operationContext,
+                OnReportSubmitted);
         }
 
-        private void OnReportBuilt(HeliosBugReport report, HeliosReportResult result)
+        private void OnReportBuilt(HeliosReportBundle report, HeliosReportResult result)
         {
             _lastReport = report;
-            _status.text = result.Message;
+            if (_status != null)
+                _status.text = result != null ? result.Message : "Report build failed.";
         }
 
         private void OnReportSubmitted(HeliosReportResult result)
         {
-            _status.text = result.Success ? $"{result.Message}\n{result.Path}" : result.Message;
+            if (_status == null)
+                return;
+            if (result == null)
+            {
+                _status.text = "Report submission did not complete.";
+                return;
+            }
+
+            _status.text = result.Success && !string.IsNullOrEmpty(result.Location)
+                ? $"{result.Message}\n{result.Location}"
+                : result.Message;
+        }
+
+        private void OnProgress(HeliosReportProgress progress)
+        {
+            if (_status != null)
+                _status.text = $"{progress.Message} {progress.Normalized:P0}";
+        }
+
+        private void Cancel()
+        {
+            _cancellation?.Cancel();
+            if (_status != null)
+                _status.text = "Cancelling...";
+        }
+
+        private HeliosTransportId GetDefaultTransportId()
+        {
+            try
+            {
+                return new HeliosTransportId(Context.Service.Settings.DefaultReportTransportId);
+            }
+            catch (ArgumentException)
+            {
+                return HeliosTransportId.LocalExport;
+            }
+        }
+
+        public override void Dispose()
+        {
+            _cancellation?.Cancel();
+            _status = null;
+            _description = null;
+            _lastReport = null;
         }
     }
 }

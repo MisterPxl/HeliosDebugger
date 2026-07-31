@@ -10,6 +10,7 @@ namespace HeliosDebugger
         string DisplayName { get; }
         string Description { get; }
         int Order { get; }
+        bool Pin { get; }
         bool IsReadOnly { get; }
         Type ValueType { get; }
         HeliosOptionValueKind ValueKind { get; }
@@ -53,9 +54,10 @@ namespace HeliosDebugger
             Func<T> getter,
             Action<T> setter = null,
             string category = "General",
-            int order = 0)
+            int order = 0,
+            bool pin = false)
         {
-            return new HeliosOptionDefinition<T>(displayName, getter, setter, category, null, order);
+            return new HeliosOptionDefinition<T>(displayName, getter, setter, category, null, order, null, pin);
         }
 
         public static HeliosDynamicActionDefinition FromMethod(
@@ -81,7 +83,8 @@ namespace HeliosDebugger
             string category = "General",
             string description = null,
             int order = 0,
-            HeliosRangeAttribute range = null)
+            HeliosRangeAttribute range = null,
+            bool pin = false)
         {
             if (getter == null)
                 throw new ArgumentNullException(nameof(getter));
@@ -95,6 +98,7 @@ namespace HeliosDebugger
             Category = FirstNonEmpty(category, "General");
             Description = description ?? string.Empty;
             Order = order;
+            Pin = pin;
             Range = range;
             _getter = getter;
             _setter = setter;
@@ -105,6 +109,7 @@ namespace HeliosDebugger
         public string DisplayName { get; }
         public string Description { get; }
         public int Order { get; }
+        public bool Pin { get; }
         public bool IsReadOnly => _setter == null;
         public Type ValueType { get; }
         public HeliosOptionValueKind ValueKind { get; }
@@ -117,8 +122,7 @@ namespace HeliosDebugger
 
         public string GetDisplayValue()
         {
-            object value = GetValue();
-            return value == null ? "<null>" : Convert.ToString(value, CultureInfo.InvariantCulture);
+            return HeliosOptionValueConverter.Format(GetValue(), ValueType);
         }
 
         public bool TrySetFromString(string text)
@@ -128,7 +132,7 @@ namespace HeliosDebugger
 
             try
             {
-                object converted = ConvertFromString(text);
+                object converted = HeliosOptionValueConverter.ConvertFromString(text, ValueType);
                 SetValue((T)converted);
                 return true;
             }
@@ -152,12 +156,19 @@ namespace HeliosDebugger
 
             if (ValueKind == HeliosOptionValueKind.Integer)
             {
-                long current = Convert.ToInt64(GetValue(), CultureInfo.InvariantCulture);
-                long step = Math.Max(1L, (long)Math.Round(Math.Abs(Range != null ? Range.Step : 1f)));
-                long next = current + (direction < 0f ? -step : step);
-                if (Range != null)
-                    next = Math.Max((long)Math.Round(Range.Min), Math.Min((long)Math.Round(Range.Max), next));
-                SetValue((T)Convert.ChangeType(next, ValueType, CultureInfo.InvariantCulture));
+                float step = Range != null ? Range.Step : 1f;
+                decimal amount = decimal.Round(
+                    Convert.ToDecimal(step * direction, CultureInfo.InvariantCulture),
+                    0,
+                    MidpointRounding.ToEven);
+                decimal? minimum = Range != null
+                    ? decimal.Round(Convert.ToDecimal(Range.Min, CultureInfo.InvariantCulture), 0, MidpointRounding.ToEven)
+                    : (decimal?)null;
+                decimal? maximum = Range != null
+                    ? decimal.Round(Convert.ToDecimal(Range.Max, CultureInfo.InvariantCulture), 0, MidpointRounding.ToEven)
+                    : (decimal?)null;
+                object next = HeliosOptionValueConverter.AdjustInteger(GetValue(), ValueType, amount, minimum, maximum);
+                SetValue((T)next);
             }
             else if (ValueKind == HeliosOptionValueKind.Float)
             {
@@ -193,39 +204,9 @@ namespace HeliosDebugger
             _setter(value);
         }
 
-        private object ConvertFromString(string text)
-        {
-            string value = text ?? string.Empty;
-            switch (ValueKind)
-            {
-                case HeliosOptionValueKind.Boolean:
-                    return bool.Parse(value);
-                case HeliosOptionValueKind.Integer:
-                    return Convert.ChangeType(long.Parse(value, CultureInfo.InvariantCulture), ValueType, CultureInfo.InvariantCulture);
-                case HeliosOptionValueKind.Float:
-                    return Convert.ChangeType(double.Parse(value, CultureInfo.InvariantCulture), ValueType, CultureInfo.InvariantCulture);
-                case HeliosOptionValueKind.String:
-                    return value;
-                case HeliosOptionValueKind.Enum:
-                    return Enum.Parse(ValueType, value, true);
-                default:
-                    throw new NotSupportedException($"Unsupported dynamic option type: {ValueType.Name}");
-            }
-        }
-
         private static bool IsSupportedValueKind(HeliosOptionValueKind kind)
         {
-            switch (kind)
-            {
-                case HeliosOptionValueKind.Boolean:
-                case HeliosOptionValueKind.Integer:
-                case HeliosOptionValueKind.Float:
-                case HeliosOptionValueKind.String:
-                case HeliosOptionValueKind.Enum:
-                    return true;
-                default:
-                    return false;
-            }
+            return kind != HeliosOptionValueKind.Unsupported;
         }
 
         private static string FirstNonEmpty(params string[] values)
@@ -324,9 +305,18 @@ namespace HeliosDebugger
             Func<T> getter,
             Action<T> setter = null,
             string category = "General",
-            int order = 0)
+            int order = 0,
+            bool pin = false)
         {
-            HeliosOptionDefinition<T> option = new HeliosOptionDefinition<T>(displayName, getter, setter, category, null, order);
+            HeliosOptionDefinition<T> option = new HeliosOptionDefinition<T>(
+                displayName,
+                getter,
+                setter,
+                category,
+                null,
+                order,
+                null,
+                pin);
             AddOption(option);
             return option;
         }

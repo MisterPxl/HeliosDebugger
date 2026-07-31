@@ -1,6 +1,6 @@
 {
   "name": "com.misterpxl.helios-debugger",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "displayName": "Helios Debugger",
   "description": "Standalone runtime debugger, console, profiler and bug-reporting tools for Unity.",
   "unity": "6000.0",
@@ -11,7 +11,7 @@
   "samples": [
     {
       "displayName": "Usage Examples",
-      "description": "Examples showing static and dynamic Helios options.",
+      "description": "Ready-to-run scene and prefab showing static and dynamic Helios options.",
       "path": "Samples~"
     }
   ],

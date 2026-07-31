@@ -16,7 +16,7 @@ It provides:
 Add the package to the project's `Packages/manifest.json`:
 
 ```json
-"com.misterpxl.helios-debugger": "https://github.com/misterpxl/HeliosDebugger.git#v1.0.0"
+"com.misterpxl.helios-debugger": "https://github.com/misterpxl/HeliosDebugger.git#v2.0.0"
 ```
 
 By default it bootstraps itself in the Editor and Development Builds only.
@@ -27,6 +27,14 @@ Create settings with:
 
 The project-owned settings asset is stored at
 `Assets/Resources/HeliosDebuggerSettings.asset`.
+
+## Sample
+
+Import `Usage Examples` from the Package Manager, then open
+`HeliosDebuggerSample.unity`. Enter Play Mode and use the floating trigger or
+the backquote key to inspect the static and dynamic sample options.
+
+`HeliosDebuggerSample.prefab` can also be dropped into another test scene.
 
 ## Options
 
@@ -109,7 +117,50 @@ To avoid two overlays, disable `Create Runtime Panel` on `DebugServiceConfigurat
 
 ## Build Policy
 
-The default policy is Development Build only. In production builds the runtime bootstrap exits early. The Editor validator also warns when Helios is present in a non-development build.
+The default policy is Development Build only. In production builds the runtime bootstrap exits early. Strict release validation fails the build while Helios is compiled unless release usage is explicitly allowed.
+
+For complete stripping, add `HELIOS_DEBUGGER_DISABLE` to the release build
+profile. The runtime and runtime-dependent editor assemblies use this as an
+assembly constraint, so their code is not compiled into that target. The
+Compilation menu under `Tools > HeliosDebugger` manages the symbol for the
+selected target.
+
+## Runtime Presentation
+
+The settings asset controls the default tab, remembered tab, trigger corner,
+gesture, panel opacity, diagnostic overlays, Escape-to-close behavior, and
+screen-space/world-space canvas mode. A project-owned theme can be created with:
+
+`Tools > HeliosDebugger > Create Theme Asset`
+
+World-space anchors and screen-space cameras are scene objects and must be
+provided at runtime through `HeliosDebuggerRoot.SetWorldSpaceAnchor` or
+`SetCanvasCamera`.
+
+Pinned values and parameterless actions remain available in the game view when
+the main panel is closed. The console supports severity filters, duplicate
+collapse, full entry details, clipboard copy, and filtered file export.
+
+## Access Policy
+
+Projects can install their own access policy:
+
+```csharp
+Helios.SetAccessPolicy(myAccessPolicy);
+```
+
+The built-in PIN policy is enabled from the settings asset. Configure its
+salted PBKDF2 hash with `Tools > HeliosDebugger > Configure Access PIN`; the
+plaintext PIN is never serialized.
+
+## Version 2 Migration
+
+Version 2 removes `HeliosReportTransportKind` and the path-based
+`HeliosBugReport`. Report transports now own a local `HeliosTransportId` and
+receive a canonical `HeliosReportBundle`, allowing new transports without
+editing a shared enum. Update custom transports to the new interface and use
+the artifact lookup API instead of `LogsPath`, `ScreenshotPath`, and related
+properties.
 
 ## Opt Out
 

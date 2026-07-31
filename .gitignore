@@ -1,3 +1,5 @@
+!/Samples~/
+!/Samples~/**
 !/UnityProject~/
 !/UnityProject~/Assets/
 !/UnityProject~/Assets/**
@@ -25,3 +27,5 @@
 *.sln
 *.slnx
 *.user
+.DS_Store
+.idea/
