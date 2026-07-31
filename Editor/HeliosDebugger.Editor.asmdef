@@ -3,7 +3,8 @@
     "rootNamespace": "HeliosDebugger.Editor",
     "references": [
         "HeliosDebugger.Annotations",
-        "HeliosDebugger.Runtime"
+        "HeliosDebugger.Runtime",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [
         "Editor"

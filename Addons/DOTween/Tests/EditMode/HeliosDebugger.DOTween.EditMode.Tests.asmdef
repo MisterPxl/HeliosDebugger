@@ -5,7 +5,8 @@
         "HeliosDebugger.Runtime",
         "HeliosDebugger.DOTween.Runtime",
         "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner"
+        "UnityEditor.TestRunner",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [
         "Editor"

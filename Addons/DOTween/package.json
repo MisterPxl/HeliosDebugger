@@ -1,11 +1,11 @@
 {
   "name": "com.misterpxl.helios-debugger.dotween",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "displayName": "Helios Debugger - DOTween",
   "description": "Optional Helios Debugger runtime tab for inspecting and controlling DOTween Free tweens.",
   "unity": "6000.0",
   "dependencies": {
-    "com.misterpxl.helios-debugger": "2.0.0",
+    "com.misterpxl.helios-debugger": "2.1.0",
     "com.unity.ugui": "2.0.0"
   },
   "samples": [

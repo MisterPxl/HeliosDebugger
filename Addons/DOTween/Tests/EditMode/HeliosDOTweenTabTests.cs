@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -121,7 +122,7 @@ namespace HeliosDebugger.DOTween.Tests
 
             Assert.IsNotNull(_root.transform.Find("TweenList/Content/Tween_1"));
             Button killAll = FindButton("TweenControls/KillAll");
-            Assert.AreEqual("Kill All", killAll.GetComponentInChildren<Text>().text);
+            Assert.AreEqual("Kill All", killAll.GetComponentInChildren<TextMeshProUGUI>().text);
             killAll.onClick.Invoke();
             Assert.AreEqual(0, monitor.KillAllCount);
         }

@@ -3,7 +3,8 @@
     "rootNamespace": "HeliosDebugger",
     "references": [
         "HeliosDebugger.Annotations",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -75,8 +75,10 @@ namespace HeliosDebugger
                 return;
 
             float maxValue = CurrentMaxValue;
+            AddBackgroundGrid(vertexHelper, rect);
             AddHorizontalLine(vertexHelper, rect, _targetFrameMs, maxValue, 1f, _gridColor);
             AddHorizontalLine(vertexHelper, rect, _warningFrameMs, maxValue, 1.5f, _gridColor);
+            AddQuad(vertexHelper, new Rect(rect.xMin, rect.yMin, rect.width, 1f), _gridColor);
 
             if (_values.Count == 0)
                 return;
@@ -92,7 +94,26 @@ namespace HeliosDebugger
                 float xMin = rect.xMin + i * slotWidth + spacing * 0.5f;
                 float xMax = Mathf.Min(rect.xMax, xMin + barWidth);
                 float yMax = rect.yMin + Mathf.Max(1f, rect.height * normalized);
-                AddQuad(vertexHelper, new Rect(xMin, rect.yMin, xMax - xMin, yMax - rect.yMin), ColorForValue(value));
+                Color barColor = ColorForValue(value);
+                Color bottomColor = new Color(barColor.r, barColor.g, barColor.b, 0.24f);
+                AddGradientQuad(vertexHelper, new Rect(xMin, rect.yMin, xMax - xMin, yMax - rect.yMin), bottomColor, barColor);
+            }
+        }
+
+        private void AddBackgroundGrid(VertexHelper vertexHelper, Rect rect)
+        {
+            Color line = _gridColor;
+            line.a *= 0.42f;
+            for (int i = 1; i < 4; i++)
+            {
+                float x = Mathf.Lerp(rect.xMin, rect.xMax, i / 4f);
+                AddQuad(vertexHelper, new Rect(x - 0.5f, rect.yMin, 1f, rect.height), line);
+            }
+
+            for (int i = 1; i < 4; i++)
+            {
+                float y = Mathf.Lerp(rect.yMin, rect.yMax, i / 4f);
+                AddQuad(vertexHelper, new Rect(rect.xMin, y - 0.5f, rect.width, 1f), line);
             }
         }
 
@@ -127,6 +148,27 @@ namespace HeliosDebugger
             vertexHelper.AddVert(vertex);
             vertex.position = new Vector3(rect.xMax, rect.yMax);
             vertexHelper.AddVert(vertex);
+            vertex.position = new Vector3(rect.xMax, rect.yMin);
+            vertexHelper.AddVert(vertex);
+
+            vertexHelper.AddTriangle(startIndex, startIndex + 1, startIndex + 2);
+            vertexHelper.AddTriangle(startIndex + 2, startIndex + 3, startIndex);
+        }
+
+        private static void AddGradientQuad(VertexHelper vertexHelper, Rect rect, Color bottomColor, Color topColor)
+        {
+            int startIndex = vertexHelper.currentVertCount;
+            UIVertex vertex = UIVertex.simpleVert;
+
+            vertex.color = bottomColor;
+            vertex.position = new Vector3(rect.xMin, rect.yMin);
+            vertexHelper.AddVert(vertex);
+            vertex.color = topColor;
+            vertex.position = new Vector3(rect.xMin, rect.yMax);
+            vertexHelper.AddVert(vertex);
+            vertex.position = new Vector3(rect.xMax, rect.yMax);
+            vertexHelper.AddVert(vertex);
+            vertex.color = bottomColor;
             vertex.position = new Vector3(rect.xMax, rect.yMin);
             vertexHelper.AddVert(vertex);
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -85,6 +86,12 @@ namespace HeliosDebugger
                 rect.pivot = new Vector2(0.5f, 1f);
                 rect.sizeDelta = new Vector2(0f, _rowHeight - 2f);
                 row.onClick.AddListener(() => SelectRow(row));
+                Image marker = _widgets.AddIcon(row.transform, HeliosShapeLibrary.Circle(), _widgets.Theme.Text, 8f);
+                marker.name = "Severity";
+                RectTransform markerRect = marker.rectTransform;
+                markerRect.anchorMin = new Vector2(0f, 0.5f);
+                markerRect.anchorMax = new Vector2(0f, 0.5f);
+                markerRect.anchoredPosition = new Vector2(14f, 0f);
                 _rows.Add(row);
             }
         }
@@ -92,7 +99,7 @@ namespace HeliosDebugger
         private void SelectRow(Button row)
         {
             int entryIndex = row.transform.GetSiblingIndex();
-            Text label = row.GetComponentInChildren<Text>();
+            TextMeshProUGUI label = row.GetComponentInChildren<TextMeshProUGUI>();
             if (label != null && int.TryParse(label.gameObject.name, out int boundIndex))
                 entryIndex = boundIndex;
 
@@ -127,11 +134,21 @@ namespace HeliosDebugger
 
                 HeliosLogViewEntry viewEntry = _entries[entryIndex];
                 HeliosLogEntry entry = viewEntry.Representative;
-                Text label = row.GetComponentInChildren<Text>();
+                Image rowBackground = row.targetGraphic as Image;
+                if (rowBackground != null)
+                    rowBackground.color = entryIndex % 2 == 0 ? _widgets.Theme.Row : Color.Lerp(_widgets.Theme.Row, _widgets.Theme.Input, 0.35f);
+
+                TextMeshProUGUI label = row.GetComponentInChildren<TextMeshProUGUI>();
                 label.gameObject.name = entryIndex.ToString();
-                label.alignment = TextAnchor.MiddleLeft;
+                label.alignment = TextAlignmentOptions.Left;
                 label.text = FormatRow(viewEntry);
                 label.color = ColorFor(entry.Level);
+                label.textWrappingMode = TextWrappingModes.NoWrap;
+                HeliosWidgetFactory.Stretch(label.rectTransform, 28f, 0f, 8f, 0f);
+
+                Transform marker = row.transform.Find("Severity");
+                if (marker != null)
+                    marker.GetComponent<Image>().color = ColorFor(entry.Level);
             }
         }
 
@@ -139,7 +156,7 @@ namespace HeliosDebugger
         {
             HeliosLogEntry entry = viewEntry.Representative;
             string count = viewEntry.Count > 1 ? $" x{viewEntry.Count}" : string.Empty;
-            return $"[{entry.Timestamp:HH:mm:ss.fff}][{entry.Level}]{count} {HeliosWidgetFactory.Truncate(entry.Message, 240)}";
+            return $"<mspace=0.58em>{entry.Timestamp:HH:mm:ss.fff}</mspace>  <mspace=0.72em>{entry.Level}</mspace>{count}  {HeliosWidgetFactory.Truncate(entry.Message, 240)}";
         }
 
         private Color ColorFor(HeliosLogLevel level)

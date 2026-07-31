@@ -11,6 +11,9 @@ namespace HeliosDebugger.Editor
 
         public void OnPreprocessBuild(BuildReport report)
         {
+            if (!HeliosTextMeshProResources.HasEssentialResources)
+                throw new BuildFailedException(HeliosTextMeshProResources.MissingResourcesMessage);
+
             HeliosDebuggerSettings settings = HeliosDebuggerSettings.LoadOrDefault();
             bool releaseBuild = (report.summary.options & BuildOptions.Development) == 0;
             if (releaseBuild && !settings.AllowInReleaseBuild)
@@ -69,6 +72,12 @@ namespace HeliosDebugger.Editor
         [MenuItem("Tools/HeliosDebugger/Validate Setup")]
         public static void ValidateSetup()
         {
+            if (!HeliosTextMeshProResources.HasEssentialResources)
+            {
+                UnityEngine.Debug.LogWarning(HeliosTextMeshProResources.MissingResourcesMessage);
+                return;
+            }
+
             HeliosDebuggerSettings settings = HeliosDebuggerSettings.LoadOrDefault();
             UnityEngine.Debug.Log(
                 $"HeliosDebugger setup valid. AutoBootstrap={settings.AutoBootstrap}, " +

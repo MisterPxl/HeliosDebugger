@@ -16,10 +16,16 @@ It provides:
 Add the package to the project's `Packages/manifest.json`:
 
 ```json
-"com.misterpxl.helios-debugger": "https://github.com/misterpxl/HeliosDebugger.git#v2.0.0"
+"com.misterpxl.helios-debugger": "https://github.com/misterpxl/HeliosDebugger.git#v2.1.0"
 ```
 
 By default it bootstraps itself in the Editor and Development Builds only.
+
+Helios uses TextMeshPro for the runtime UI. If TMP Essential Resources are not
+present, the editor imports them automatically from Unity's built-in `com.unity.ugui`
+package. You can also run the import manually with:
+
+`Tools > HeliosDebugger > Import TMP Essential Resources`
 
 Create settings with:
 
@@ -132,6 +138,35 @@ gesture, panel opacity, diagnostic overlays, Escape-to-close behavior, and
 screen-space/world-space canvas mode. A project-owned theme can be created with:
 
 `Tools > HeliosDebugger > Create Theme Asset`
+
+The default runtime presentation is a dark dev-tool style UI using the bundled
+Inter font and Lucide icon set. Both assets live under
+`Runtime/Resources/HeliosDebugger`; Inter is licensed under OFL 1.1 and Lucide
+under ISC.
+
+`HeliosThemeProfile` exposes surface colors, content colors, button states,
+border/elevation colors, corner radii, spacing, and typography sizes. Existing
+theme assets keep their previous serialized colors and can opt into the newer
+tokens incrementally.
+
+Custom tabs can provide an icon without central registry edits:
+
+```csharp
+public sealed class MyRuntimeTab : HeliosTabBase, IHeliosTabIcon
+{
+    public override string Title => "Gameplay";
+    public override int Order => 25;
+    public Sprite Icon => HeliosIcons.Get("sliders");
+
+    protected override void BuildContent(HeliosWidgetFactory widgets, Transform parent)
+    {
+        widgets.CreateEmptyState("Empty", parent, "No gameplay diagnostics yet.");
+    }
+}
+```
+
+Addons that need their own sprites can create a `HeliosIconSet` asset and call
+`HeliosIcons.Register(iconSet)` during their bootstrap.
 
 World-space anchors and screen-space cameras are scene objects and must be
 provided at runtime through `HeliosDebuggerRoot.SetWorldSpaceAnchor` or

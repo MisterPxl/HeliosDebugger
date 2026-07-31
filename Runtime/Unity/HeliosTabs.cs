@@ -4,25 +4,27 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace HeliosDebugger
 {
-    public sealed class HeliosConsoleTab : HeliosTabBase
+    public sealed class HeliosConsoleTab : HeliosTabBase, IHeliosTabIcon
     {
         private readonly HeliosLogFilter _filter = new HeliosLogFilter();
         private HeliosLogQuery _query;
         private HeliosVirtualizedLogList _list;
         private ScrollRect _scroll;
-        private Text _detail;
-        private Text _status;
+        private TextMeshProUGUI _detail;
+        private TextMeshProUGUI _status;
         private bool _paused;
         private int _lastCount = -1;
         private HeliosLogViewEntry _selected;
 
         public override string Title => "Console";
         public override int Order => 0;
+        public Sprite Icon => HeliosIcons.Get(HeliosIcons.Console);
 
         public override void Initialize(HeliosContext context)
         {
@@ -33,7 +35,7 @@ namespace HeliosDebugger
         protected override void BuildContent(HeliosWidgetFactory widgets, Transform parent)
         {
             GameObject controls = widgets.CreatePanel("ConsoleControls", parent, new Color(0f, 0f, 0f, 0f));
-            controls.AddComponent<HorizontalLayoutGroup>().spacing = 6f;
+            controls.AddComponent<HorizontalLayoutGroup>().spacing = widgets.Theme.Spacing;
             widgets.AddLayout(controls, 40f);
 
             widgets.CreateButton("Clear", controls.transform, "Clear", () =>
@@ -41,15 +43,15 @@ namespace HeliosDebugger
                 Context.Service.Logs.Clear();
                 _lastCount = -1;
                 RebuildList(false);
-            });
+            }, HeliosButtonStyle.Danger(widgets.Theme));
             Button pause = widgets.CreateButton("Pause", controls.transform, "Pause", null);
-            Text pauseLabel = pause.GetComponentInChildren<Text>();
+            TextMeshProUGUI pauseLabel = HeliosWidgetFactory.GetButtonLabel(pause);
             pause.onClick.AddListener(() =>
             {
                 _paused = !_paused;
                 pauseLabel.text = _paused ? "Resume" : "Pause";
             });
-            InputField search = widgets.CreateInput("Search", controls.transform, "Search logs", value =>
+            TMP_InputField search = widgets.CreateInput("Search", controls.transform, "Search logs", value =>
             {
                 _filter.Search = value ?? string.Empty;
                 _lastCount = -1;
@@ -58,7 +60,7 @@ namespace HeliosDebugger
             widgets.AddLayout(search.gameObject, 36f);
 
             GameObject filters = widgets.CreatePanel("ConsoleFilters", parent, new Color(0f, 0f, 0f, 0f));
-            filters.AddComponent<HorizontalLayoutGroup>().spacing = 6f;
+            filters.AddComponent<HorizontalLayoutGroup>().spacing = widgets.Theme.Spacing;
             widgets.AddLayout(filters, 38f);
             CreateLevelButton(filters.transform, "Log", HeliosLogLevelMask.Log);
             CreateLevelButton(filters.transform, "Warn", HeliosLogLevelMask.Warning);
@@ -67,7 +69,7 @@ namespace HeliosDebugger
             CreateLevelButton(filters.transform, "Assert", HeliosLogLevelMask.Assert);
 
             Button collapse = widgets.CreateButton("Collapse", filters.transform, "Collapse: Off", null);
-            Text collapseLabel = collapse.GetComponentInChildren<Text>();
+            TextMeshProUGUI collapseLabel = HeliosWidgetFactory.GetButtonLabel(collapse);
             collapse.onClick.AddListener(() =>
             {
                 _filter.CollapseDuplicates = !_filter.CollapseDuplicates;
@@ -80,13 +82,14 @@ namespace HeliosDebugger
             _scroll = widgets.CreateScrollView("ConsoleList", parent, out RectTransform content);
             widgets.AddLayout(_scroll.gameObject, 480f, 260f);
             _list = _scroll.gameObject.AddComponent<HeliosVirtualizedLogList>();
-            _list.Initialize(_scroll, content, widgets, 32f, SelectEntry);
+            _list.Initialize(_scroll, content, widgets, widgets.Theme.RowHeight, SelectEntry);
 
             _detail = widgets.CreateText("LogDetail", parent, "Select a log entry to inspect its full message and stack trace.", 13, TextAnchor.UpperLeft);
+            _detail.color = widgets.Theme.MutedText;
             widgets.AddLayout(_detail.gameObject, 150f, 100f);
 
             GameObject detailControls = widgets.CreatePanel("DetailControls", parent, new Color(0f, 0f, 0f, 0f));
-            detailControls.AddComponent<HorizontalLayoutGroup>().spacing = 6f;
+            detailControls.AddComponent<HorizontalLayoutGroup>().spacing = widgets.Theme.Spacing;
             widgets.AddLayout(detailControls, 36f);
             widgets.CreateButton("CopyMessage", detailControls.transform, "Copy Message", () =>
             {
@@ -128,15 +131,17 @@ namespace HeliosDebugger
 
         private void CreateLevelButton(Transform parent, string label, HeliosLogLevelMask level)
         {
-            Button button = Widgets.CreateButton($"Filter_{level}", parent, $"[x] {label}", null);
-            Text text = button.GetComponentInChildren<Text>();
+            Button button = Widgets.CreateButton($"Filter_{level}", parent, $"✓ {label}", null, HeliosButtonStyle.Ghost(Widgets.Theme));
+            TextMeshProUGUI text = HeliosWidgetFactory.GetButtonLabel(button);
             button.onClick.AddListener(() =>
             {
                 bool enabled = (_filter.Levels & level) != 0;
                 _filter.Levels = enabled ? _filter.Levels & ~level : _filter.Levels | level;
-                text.text = enabled ? $"[ ] {label}" : $"[x] {label}";
+                text.text = enabled ? label : $"✓ {label}";
+                text.color = enabled ? Widgets.Theme.MutedText : Widgets.Theme.Accent;
                 RebuildList(false);
             });
+            text.color = Widgets.Theme.Accent;
         }
 
         private void SelectEntry(HeliosLogViewEntry entry)
@@ -176,20 +181,20 @@ namespace HeliosDebugger
         }
     }
 
-    public sealed class HeliosProfilerTab : HeliosTabBase
+    public sealed class HeliosProfilerTab : HeliosTabBase, IHeliosTabIcon
     {
         private readonly List<float> _frameTimes = new List<float>();
         private HeliosTimeSeriesGraph _graph;
-        private Text _fpsValue;
-        private Text _frameValue;
-        private Text _scaleValue;
-        private Text _managedValue;
-        private Text _usedValue;
-        private Text _reservedValue;
-        private Text _gcValue;
-        private Text _drawCallsValue;
-        private Text _scriptsValue;
-        private Text _status;
+        private TextMeshProUGUI _fpsValue;
+        private TextMeshProUGUI _frameValue;
+        private TextMeshProUGUI _scaleValue;
+        private TextMeshProUGUI _managedValue;
+        private TextMeshProUGUI _usedValue;
+        private TextMeshProUGUI _reservedValue;
+        private TextMeshProUGUI _gcValue;
+        private TextMeshProUGUI _drawCallsValue;
+        private TextMeshProUGUI _scriptsValue;
+        private TextMeshProUGUI _status;
         private Image _managedFill;
         private Image _reservedFill;
         private Button _cleanButton;
@@ -198,11 +203,12 @@ namespace HeliosDebugger
 
         public override string Title => "Profiler";
         public override int Order => 10;
+        public Sprite Icon => HeliosIcons.Get(HeliosIcons.Profiler);
 
         protected override void BuildContent(HeliosWidgetFactory widgets, Transform parent)
         {
             GameObject controls = widgets.CreatePanel("ProfilerControls", parent, new Color(0f, 0f, 0f, 0f));
-            controls.AddComponent<HorizontalLayoutGroup>().spacing = 6f;
+            controls.AddComponent<HorizontalLayoutGroup>().spacing = widgets.Theme.Spacing;
             widgets.AddLayout(controls, 40f);
             widgets.CreateButton("Reset", controls.transform, "Reset", ResetHistory);
             widgets.CreateButton("GCCollect", controls.transform, "GC Collect", CollectGarbage);
@@ -343,22 +349,25 @@ namespace HeliosDebugger
             _lastRefresh = 0f;
         }
 
-        private GameObject CreateMemoryCard(HeliosWidgetFactory widgets, string name, Transform parent, string title, out Text value, out Image fill)
+        private GameObject CreateMemoryCard(HeliosWidgetFactory widgets, string name, Transform parent, string title, out TextMeshProUGUI value, out Image fill)
         {
-            GameObject card = widgets.CreatePanel(name, parent, widgets.Theme.Input);
+            GameObject card = widgets.CreateSurface(name, parent, widgets.Theme.Input, widgets.Theme.CardCornerRadius);
+            widgets.AddBorder(card, widgets.Theme.Border);
             VerticalLayoutGroup layout = card.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(10, 10, 8, 8);
-            layout.spacing = 6f;
+            layout.padding = new RectOffset(12, 12, 9, 9);
+            layout.spacing = widgets.Theme.SpaceXs;
             layout.childControlHeight = true;
             layout.childControlWidth = true;
             layout.childForceExpandHeight = false;
 
-            Text titleText = widgets.CreateText("Title", card.transform, title, 13);
+            TextMeshProUGUI titleText = widgets.CreateText("Title", card.transform, title, widgets.Theme.CaptionFontSize);
             titleText.color = widgets.Theme.MutedText;
-            widgets.AddLayout(titleText.gameObject, 22f);
+            titleText.fontStyle = FontStyles.UpperCase;
+            widgets.AddLayout(titleText.gameObject, 18f);
 
-            value = widgets.CreateText("Value", card.transform, "--", 20);
-            widgets.AddLayout(value.gameObject, 30f);
+            value = widgets.CreateText("Value", card.transform, "--", widgets.Theme.TitleFontSize);
+            value.fontStyle = FontStyles.Bold;
+            widgets.AddLayout(value.gameObject, 28f);
 
             Color barBackground = widgets.Theme.MutedText;
             barBackground.a = 0.12f;
@@ -404,7 +413,7 @@ namespace HeliosDebugger
         }
     }
 
-    public sealed class HeliosOptionsTab : HeliosTabBase, IHeliosTabOpenHandler
+    public sealed class HeliosOptionsTab : HeliosTabBase, IHeliosTabOpenHandler, IHeliosTabIcon
     {
         private const int ForceRebuildRevision = -1;
 
@@ -416,6 +425,7 @@ namespace HeliosDebugger
 
         public override string Title => "Options";
         public override int Order => 20;
+        public Sprite Icon => HeliosIcons.Get(HeliosIcons.Options);
 
         public override void Initialize(HeliosContext context)
         {
@@ -439,9 +449,9 @@ namespace HeliosDebugger
         protected override void BuildContent(HeliosWidgetFactory widgets, Transform parent)
         {
             GameObject controls = widgets.CreatePanel("OptionsControls", parent, new Color(0f, 0f, 0f, 0f));
-            controls.AddComponent<HorizontalLayoutGroup>().spacing = 6f;
+            controls.AddComponent<HorizontalLayoutGroup>().spacing = widgets.Theme.Spacing;
             widgets.AddLayout(controls, 40f);
-            InputField search = widgets.CreateInput("Search", controls.transform, "Search options", value =>
+            TMP_InputField search = widgets.CreateInput("Search", controls.transform, "Search options", value =>
             {
                 _search = value ?? string.Empty;
                 _lastRevision = ForceRebuildRevision;
@@ -554,18 +564,17 @@ namespace HeliosDebugger
                 return;
 
             currentCategory = next;
-            Text label = Widgets.CreateText($"Category_{next}", _content, next, 16);
-            label.color = Widgets.Theme.Accent;
-            Widgets.AddLayout(label.gameObject, 30f);
+            Widgets.CreateSectionHeader($"Category_{next}", _content, next);
         }
 
         private void AddOption(IHeliosValueOption option)
         {
             bool hasDescription = !string.IsNullOrWhiteSpace(option.Description);
-            GameObject card = Widgets.CreatePanel($"Option_{option.DisplayName}", _content, Widgets.Theme.Row);
+            GameObject card = Widgets.CreateSurface($"Option_{option.DisplayName}", _content, Widgets.Theme.Row, Widgets.Theme.CardCornerRadius);
+            Widgets.AddBorder(card, Widgets.Theme.Border);
             VerticalLayoutGroup cardLayout = card.AddComponent<VerticalLayoutGroup>();
-            cardLayout.padding = new RectOffset(6, 6, 4, 4);
-            cardLayout.spacing = 3f;
+            cardLayout.padding = new RectOffset(10, 10, 7, 7);
+            cardLayout.spacing = 4f;
             cardLayout.childControlWidth = true;
             cardLayout.childForceExpandWidth = true;
             cardLayout.childForceExpandHeight = false;
@@ -580,7 +589,8 @@ namespace HeliosDebugger
             layout.childForceExpandWidth = true;
             Widgets.AddLayout(row, 38f);
 
-            Text label = Widgets.CreateText("Label", row.transform, option.DisplayName, 14);
+            TextMeshProUGUI label = Widgets.CreateText("Label", row.transform, option.DisplayName, 14);
+            label.fontStyle = FontStyles.Bold;
             Widgets.AddLayout(label.gameObject, -1f, 32f);
 
             IHeliosOptionControlBuilder builder = FindControlBuilder(option);
@@ -601,7 +611,7 @@ namespace HeliosDebugger
 
             if (hasDescription)
             {
-                Text description = Widgets.CreateText("Description", card.transform, option.Description, 12);
+                TextMeshProUGUI description = Widgets.CreateText("Description", card.transform, option.Description, 12);
                 description.color = Widgets.Theme.MutedText;
                 Widgets.AddLayout(description.gameObject, 22f);
             }
@@ -636,7 +646,8 @@ namespace HeliosDebugger
                 return;
             }
 
-            GameObject card = Widgets.CreatePanel($"Action_{action.DisplayName}", _content, Widgets.Theme.Row);
+            GameObject card = Widgets.CreateSurface($"Action_{action.DisplayName}", _content, Widgets.Theme.Row, Widgets.Theme.CardCornerRadius);
+            Widgets.AddBorder(card, Widgets.Theme.Border);
             VerticalLayoutGroup layout = card.AddComponent<VerticalLayoutGroup>();
             layout.spacing = 6f;
             layout.padding = new RectOffset(8, 8, 6, 6);
@@ -646,12 +657,12 @@ namespace HeliosDebugger
             float descriptionHeight = string.IsNullOrWhiteSpace(action.Description) ? 0f : 24f;
             Widgets.AddLayout(card, Mathf.Max(96f, 84f + descriptionHeight + action.Parameters.Count * 42f));
 
-            Text title = Widgets.CreateText("Title", card.transform, action.DisplayName, 14);
+            TextMeshProUGUI title = Widgets.CreateText("Title", card.transform, action.DisplayName, 14);
             title.color = Widgets.Theme.Text;
             Widgets.AddLayout(title.gameObject, 24f);
             if (!string.IsNullOrWhiteSpace(action.Description))
             {
-                Text description = Widgets.CreateText("Description", card.transform, action.Description, 12);
+                TextMeshProUGUI description = Widgets.CreateText("Description", card.transform, action.Description, 12);
                 description.color = Widgets.Theme.MutedText;
                 Widgets.AddLayout(description.gameObject, 22f);
             }
@@ -708,14 +719,14 @@ namespace HeliosDebugger
             rowLayout.childForceExpandWidth = true;
             Widgets.AddLayout(row, 36f);
 
-            Text label = Widgets.CreateText("Label", row.transform, FormatParameterLabel(parameter), 13);
+            TextMeshProUGUI label = Widgets.CreateText("Label", row.transform, FormatParameterLabel(parameter), 13);
             Widgets.AddLayout(label.gameObject, -1f, 30f);
             return row;
         }
 
         private void AddTextParameterControl(Transform parent, HeliosActionParameter parameter, List<Func<string>> valueReaders)
         {
-            InputField input = Widgets.CreateInput("Value", parent, parameter.DefaultText, null);
+            TMP_InputField input = Widgets.CreateInput("Value", parent, parameter.DefaultText, null);
             input.text = parameter.DefaultText;
             Widgets.AddLayout(input.gameObject, -1f, 30f);
             valueReaders.Add(() => input != null ? input.text : string.Empty);
@@ -724,15 +735,13 @@ namespace HeliosDebugger
         private void AddBooleanParameterControl(Transform parent, HeliosActionParameter parameter, List<Func<string>> valueReaders)
         {
             bool value = bool.TryParse(parameter.DefaultText, out bool parsed) && parsed;
-            Button button = Widgets.CreateButton("BooleanValue", parent, value ? "true" : "false", null);
-            Text buttonText = button.GetComponentInChildren<Text>();
-            button.onClick.AddListener(() =>
+            HeliosSwitchControl control = Widgets.CreateSwitch("BooleanValue", parent, value, value ? "true" : "false", null);
+            control.Button.onClick.AddListener(() =>
             {
                 value = !value;
-                if (buttonText != null)
-                    buttonText.text = value ? "true" : "false";
+                control.SetValue(value, value ? "true" : "false");
             });
-            Widgets.AddLayout(button.gameObject, -1f, 30f);
+            Widgets.AddLayout(control.Button.gameObject, -1f, 30f);
             valueReaders.Add(() => value ? "true" : "false");
         }
 
@@ -744,7 +753,7 @@ namespace HeliosDebugger
                 index = 0;
 
             Button button = Widgets.CreateButton("EnumValue", parent, names.Length == 0 ? string.Empty : names[index], null);
-            Text buttonText = button.GetComponentInChildren<Text>();
+            TextMeshProUGUI buttonText = HeliosWidgetFactory.GetButtonLabel(button);
             button.onClick.AddListener(() =>
             {
                 if (names.Length == 0)
@@ -772,7 +781,7 @@ namespace HeliosDebugger
             Button minus = Widgets.CreateButton("Minus", parent, "-", null);
             Widgets.AddLayout(minus.gameObject, 34f, 30f);
 
-            InputField input = Widgets.CreateInput("Value", parent, FormatParameterNumber(parameter, value), null);
+            TMP_InputField input = Widgets.CreateInput("Value", parent, FormatParameterNumber(parameter, value), null);
             input.text = FormatParameterNumber(parameter, value);
             Widgets.AddLayout(input.gameObject, -1f, 30f);
 
@@ -809,7 +818,7 @@ namespace HeliosDebugger
         private void AddFreeNumericParameterControl(Transform parent, HeliosActionParameter parameter, List<Func<string>> valueReaders)
         {
             float value = ParseParameterFloat(parameter.DefaultText);
-            InputField input = Widgets.CreateInput("Value", parent, FormatParameterNumber(parameter, value), null);
+            TMP_InputField input = Widgets.CreateInput("Value", parent, FormatParameterNumber(parameter, value), null);
             input.text = FormatParameterNumber(parameter, value);
             Widgets.AddLayout(input.gameObject, -1f, 30f);
 
@@ -930,14 +939,15 @@ namespace HeliosDebugger
         }
     }
 
-    public sealed class HeliosSystemInfoTab : HeliosTabBase, IHeliosTabOpenHandler
+    public sealed class HeliosSystemInfoTab : HeliosTabBase, IHeliosTabOpenHandler, IHeliosTabIcon
     {
-        private Text _info;
+        private TextMeshProUGUI _info;
         private float _lastRefresh;
         private bool _accessGranted;
 
         public override string Title => "System";
         public override int Order => 30;
+        public Sprite Icon => HeliosIcons.Get(HeliosIcons.System);
 
         protected override void BuildContent(HeliosWidgetFactory widgets, Transform parent)
         {
@@ -967,24 +977,25 @@ namespace HeliosDebugger
         }
     }
 
-    public sealed class HeliosBugReporterTab : HeliosTabBase
+    public sealed class HeliosBugReporterTab : HeliosTabBase, IHeliosTabIcon
     {
-        private InputField _description;
-        private Text _status;
+        private TMP_InputField _description;
+        private TextMeshProUGUI _status;
         private HeliosReportBundle _lastReport;
         private HeliosReportCancellationSource _cancellation;
 
         public override string Title => "Bug Reporter";
         public override int Order => 40;
+        public Sprite Icon => HeliosIcons.Get(HeliosIcons.BugReporter);
 
         protected override void BuildContent(HeliosWidgetFactory widgets, Transform parent)
         {
             _description = widgets.CreateInput("Description", parent, "Describe the issue, reproduction steps, expected result...", null);
-            _description.lineType = InputField.LineType.MultiLineNewline;
+            _description.lineType = TMP_InputField.LineType.MultiLineNewline;
             widgets.AddLayout(_description.gameObject, 160f);
 
             GameObject controls = widgets.CreatePanel("ReportControls", parent, new Color(0f, 0f, 0f, 0f));
-            controls.AddComponent<HorizontalLayoutGroup>().spacing = 6f;
+            controls.AddComponent<HorizontalLayoutGroup>().spacing = widgets.Theme.Spacing;
             widgets.AddLayout(controls, 44f);
 
             widgets.CreateButton("Build", controls.transform, "Build Report", BuildReport);

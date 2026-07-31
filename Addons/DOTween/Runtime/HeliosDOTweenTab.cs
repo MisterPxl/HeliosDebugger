@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -23,7 +24,7 @@ namespace HeliosDebugger.DOTween
         }
     }
 
-    public sealed class HeliosDOTweenTab : HeliosTabBase
+    public sealed class HeliosDOTweenTab : HeliosTabBase, IHeliosTabIcon
     {
         private const float RefreshInterval = 0.1f;
         private const float KillConfirmationDuration = 3f;
@@ -38,11 +39,11 @@ namespace HeliosDebugger.DOTween
         private DOTweenMonitorSnapshot _snapshot;
         private ScrollRect _scroll;
         private RectTransform _listContent;
-        private Text _activeValue;
-        private Text _playingValue;
-        private Text _pausedValue;
-        private Text _status;
-        private Text _killAllLabel;
+        private TextMeshProUGUI _activeValue;
+        private TextMeshProUGUI _playingValue;
+        private TextMeshProUGUI _pausedValue;
+        private TextMeshProUGUI _status;
+        private TextMeshProUGUI _killAllLabel;
         private string _search = string.Empty;
         private int _filterRevision;
         private int _renderedFilterRevision = -1;
@@ -72,6 +73,7 @@ namespace HeliosDebugger.DOTween
 
         public override string Title => "Tweens";
         public override int Order => 15;
+        public Sprite Icon => HeliosIcons.Get(HeliosIcons.Tweens);
 
         protected override void BuildContent(HeliosWidgetFactory widgets, Transform parent)
         {
@@ -99,7 +101,7 @@ namespace HeliosDebugger.DOTween
             controlLayout.childForceExpandWidth = false;
             widgets.AddLayout(controls, 40f);
 
-            InputField search = widgets.CreateInput("Search", controls.transform, "Search ID, target or type", OnSearchChanged);
+            TMP_InputField search = widgets.CreateInput("Search", controls.transform, "Search ID, target or type", OnSearchChanged);
             search.SetTextWithoutNotify(_search);
             SetFlexibleWidth(search.gameObject);
             Button pauseAll = widgets.CreateButton("PauseAll", controls.transform, "Pause All", PauseAll);
@@ -108,7 +110,7 @@ namespace HeliosDebugger.DOTween
             SetFixedWidth(playAll.gameObject, 110f);
             Button killAll = widgets.CreateButton("KillAll", controls.transform, "Kill All", RequestKillAll);
             SetFixedWidth(killAll.gameObject, 150f);
-            _killAllLabel = killAll.GetComponentInChildren<Text>();
+            _killAllLabel = HeliosWidgetFactory.GetButtonLabel(killAll);
 
             _status = widgets.CreateText("TweenStatus", parent, "DOTween status unavailable.", 13);
             _status.color = widgets.Theme.MutedText;
@@ -296,7 +298,8 @@ namespace HeliosDebugger.DOTween
 
         private RowBinding CreateRow(DOTweenTweenSnapshot snapshot)
         {
-            GameObject card = Widgets.CreatePanel($"Tween_{snapshot.Handle}", _listContent, Widgets.Theme.Row);
+            GameObject card = Widgets.CreateSurface($"Tween_{snapshot.Handle}", _listContent, Widgets.Theme.Row, Widgets.Theme.CardCornerRadius);
+            Widgets.AddBorder(card, Widgets.Theme.Border);
             VerticalLayoutGroup cardLayout = card.AddComponent<VerticalLayoutGroup>();
             cardLayout.padding = new RectOffset(8, 8, 5, 5);
             cardLayout.spacing = 4f;
@@ -312,11 +315,11 @@ namespace HeliosDebugger.DOTween
             headerLayout.childForceExpandWidth = false;
             Widgets.AddLayout(header, 36f);
 
-            Text title = Widgets.CreateText("Title", header.transform, string.Empty, 13);
+            TextMeshProUGUI title = Widgets.CreateText("Title", header.transform, string.Empty, 13);
             SetFlexibleWidth(title.gameObject);
             Button playPause = Widgets.CreateButton("PlayPause", header.transform, "Pause", null);
             SetFixedWidth(playPause.gameObject, 80f);
-            Text playPauseLabel = playPause.GetComponentInChildren<Text>();
+            TextMeshProUGUI playPauseLabel = HeliosWidgetFactory.GetButtonLabel(playPause);
             Button complete = Widgets.CreateButton("Complete", header.transform, "Complete", null);
             SetFixedWidth(complete.gameObject, 96f);
             Button kill = Widgets.CreateButton("Kill", header.transform, "Kill", null);
@@ -329,7 +332,7 @@ namespace HeliosDebugger.DOTween
             fill.rectTransform.anchorMax = new Vector2(0f, 1f);
             fill.rectTransform.offsetMin = Vector2.zero;
             fill.rectTransform.offsetMax = Vector2.zero;
-            Text detail = Widgets.CreateText("Detail", progress.transform, string.Empty, 11, TextAnchor.MiddleCenter);
+            TextMeshProUGUI detail = Widgets.CreateText("Detail", progress.transform, string.Empty, 11, TextAnchor.MiddleCenter);
             HeliosWidgetFactory.Stretch(detail.rectTransform);
             Widgets.AddLayout(progress, 28f);
 
@@ -383,7 +386,7 @@ namespace HeliosDebugger.DOTween
                     break;
             }
 
-            Text header = Widgets.CreateText(
+            TextMeshProUGUI header = Widgets.CreateText(
                 $"Section_{title}",
                 _listContent,
                 $"{title} ({count})",
@@ -521,10 +524,10 @@ namespace HeliosDebugger.DOTween
             public RowBinding(
                 DOTweenTweenSnapshot snapshot,
                 RectTransform root,
-                Text title,
-                Text detail,
+                TextMeshProUGUI title,
+                TextMeshProUGUI detail,
                 Image fill,
-                Text playPauseLabel)
+                TextMeshProUGUI playPauseLabel)
             {
                 Snapshot = snapshot;
                 Root = root;
@@ -536,10 +539,10 @@ namespace HeliosDebugger.DOTween
 
             public DOTweenTweenSnapshot Snapshot { get; set; }
             public RectTransform Root { get; }
-            public Text Title { get; }
-            public Text Detail { get; }
+            public TextMeshProUGUI Title { get; }
+            public TextMeshProUGUI Detail { get; }
             public Image Fill { get; }
-            public Text PlayPauseLabel { get; }
+            public TextMeshProUGUI PlayPauseLabel { get; }
         }
     }
 }

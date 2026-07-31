@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -67,7 +68,7 @@ namespace HeliosDebugger
                 if (!options[i].Pin || bindingIndex >= _bar.transform.childCount)
                     continue;
                 Button button = _bar.transform.GetChild(bindingIndex).GetComponent<Button>();
-                Text label = button != null ? button.GetComponentInChildren<Text>() : null;
+                TextMeshProUGUI label = button != null ? HeliosWidgetFactory.GetButtonLabel(button) : null;
                 if (label != null)
                     label.text = $"{options[i].DisplayName}: {options[i].GetDisplayValue()}";
                 bindingIndex++;
@@ -154,7 +155,7 @@ namespace HeliosDebugger
     public sealed class HeliosDockedConsoleOverlay : HeliosOverlayBase
     {
         private HeliosLogQuery _query;
-        private Text _text;
+        private TextMeshProUGUI _text;
         private int _lastCount = -1;
 
         public override string Id => "helios.docked-console";
@@ -172,7 +173,8 @@ namespace HeliosDebugger
             {
                 Context.Service.OpenTab(typeof(HeliosConsoleTab));
                 Context.Root.RebuildActiveTab();
-            });
+            }, HeliosButtonStyle.Ghost(widgets.Theme));
+            widgets.AddBorder(panel.gameObject, widgets.Theme.Border);
             RectTransform rect = panel.GetComponent<RectTransform>();
             HeliosWidgetFactory.Anchor(
                 rect,
@@ -180,9 +182,11 @@ namespace HeliosDebugger
                 new Vector2(0.42f, 0f),
                 new Vector2(12f, 12f),
                 new Vector2(0f, 132f));
-            _text = panel.GetComponentInChildren<Text>();
-            _text.alignment = TextAnchor.UpperLeft;
+            _text = HeliosWidgetFactory.GetButtonLabel(panel);
+            _text.alignment = TextAlignmentOptions.TopLeft;
             _text.fontSize = 12;
+            _text.color = widgets.Theme.MutedText;
+            HeliosWidgetFactory.Stretch(_text.rectTransform, 12f, 10f, 12f, 10f);
         }
 
         public override void Refresh()
@@ -207,7 +211,7 @@ namespace HeliosDebugger
 
     public sealed class HeliosDockedProfilerOverlay : HeliosOverlayBase
     {
-        private Text _text;
+        private TextMeshProUGUI _text;
 
         public override string Id => "helios.docked-profiler";
         public override int Order => 20;
@@ -218,7 +222,8 @@ namespace HeliosDebugger
             {
                 Context.Service.OpenTab(typeof(HeliosProfilerTab));
                 Context.Root.RebuildActiveTab();
-            });
+            }, HeliosButtonStyle.Ghost(widgets.Theme));
+            widgets.AddBorder(panel.gameObject, widgets.Theme.Border);
             RectTransform rect = panel.GetComponent<RectTransform>();
             HeliosWidgetFactory.Anchor(
                 rect,
@@ -226,8 +231,10 @@ namespace HeliosDebugger
                 new Vector2(1f, 1f),
                 new Vector2(-252f, -104f),
                 new Vector2(-12f, -12f));
-            _text = panel.GetComponentInChildren<Text>();
-            _text.alignment = TextAnchor.MiddleLeft;
+            _text = HeliosWidgetFactory.GetButtonLabel(panel);
+            _text.alignment = TextAlignmentOptions.Left;
+            _text.color = widgets.Theme.Text;
+            HeliosWidgetFactory.Stretch(_text.rectTransform, 12f, 8f, 12f, 8f);
         }
 
         public override void Refresh()

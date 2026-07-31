@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -19,8 +20,8 @@ namespace HeliosDebugger
         private GameObject _trigger;
         private GameObject _overlayRoot;
         private GameObject _challengePanel;
-        private InputField _challengeInput;
-        private Text _challengeStatus;
+        private TMP_InputField _challengeInput;
+        private TextMeshProUGUI _challengeStatus;
         private RectTransform _content;
         private Camera _canvasCamera;
         private Transform _worldSpaceAnchor;
@@ -126,6 +127,7 @@ namespace HeliosDebugger
             if (_content == null || _service.ActiveTab == null)
                 return;
 
+            RefreshTabSelection();
             _widgets.Clear(_content);
             _service.ActiveTab.Build(_widgets, _content);
         }
@@ -162,36 +164,51 @@ namespace HeliosDebugger
 
             Color panelColor = _widgets.Theme.Panel;
             panelColor.a = _service.Settings.PanelOpacity;
-            _panel = _widgets.CreatePanel("Panel", canvasGo.transform, panelColor);
+            _panel = _widgets.CreateSurface("Panel", canvasGo.transform, panelColor, _widgets.Theme.CardCornerRadius);
+            _widgets.AddShadow(_panel);
+            _widgets.AddBorder(_panel, _widgets.Theme.Border);
             RectTransform panelRect = _panel.GetComponent<RectTransform>();
             HeliosWidgetFactory.Anchor(panelRect, Vector2.zero, Vector2.one, new Vector2(64f, 48f), new Vector2(-64f, -48f));
 
-            GameObject header = _widgets.CreatePanel("Header", _panel.transform, _widgets.Theme.Header);
+            GameObject header = _widgets.CreateSurface("Header", _panel.transform, _widgets.Theme.Header, _widgets.Theme.CardCornerRadius);
             RectTransform headerRect = header.GetComponent<RectTransform>();
             HeliosWidgetFactory.Anchor(headerRect, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -60f), Vector2.zero);
-            Text title = _widgets.CreateText("Title", header.transform, "HeliosDebugger", 22, TextAnchor.MiddleLeft);
-            HeliosWidgetFactory.Stretch(title.rectTransform, 18f, 0f, 160f, 0f);
-            Button close = _widgets.CreateButton("Close", header.transform, "Close", () => _service.Hide());
-            HeliosWidgetFactory.Anchor(close.GetComponent<RectTransform>(), new Vector2(1f, 0.1f), new Vector2(1f, 0.9f), new Vector2(-146f, 0f), new Vector2(-16f, 0f));
+            GameObject logo = _widgets.CreateSurface("Logo", header.transform, _widgets.Theme.Selected, 999f);
+            RectTransform logoRect = logo.GetComponent<RectTransform>();
+            HeliosWidgetFactory.Anchor(logoRect, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(18f, -16f), new Vector2(50f, 16f));
+            _widgets.AddIcon(logo.transform, HeliosIcons.Get(HeliosIcons.Console), _widgets.Theme.Accent, 18f);
 
-            GameObject tabs = _widgets.CreatePanel("Tabs", _panel.transform, _widgets.Theme.Navigation);
+            TextMeshProUGUI title = _widgets.CreateText("Title", header.transform, "Helios Debugger", _widgets.Theme.TitleFontSize, TextAnchor.MiddleLeft);
+            title.fontStyle = FontStyles.Bold;
+            HeliosWidgetFactory.Stretch(title.rectTransform, 60f, 0f, 90f, 0f);
+            Button close = _widgets.CreateIconButton("Close", header.transform, HeliosIcons.Get("x"), () => _service.Hide());
+            HeliosWidgetFactory.Anchor(close.GetComponent<RectTransform>(), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-58f, -18f), new Vector2(-22f, 18f));
+
+            GameObject tabs = _widgets.CreateSurface("Tabs", _panel.transform, _widgets.Theme.Navigation, _widgets.Theme.CardCornerRadius);
             RectTransform tabsRect = tabs.GetComponent<RectTransform>();
-            HeliosWidgetFactory.Anchor(tabsRect, new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0f), new Vector2(180f, -60f));
+            HeliosWidgetFactory.Anchor(tabsRect, new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0f), new Vector2(212f, -60f));
             VerticalLayoutGroup tabLayout = tabs.AddComponent<VerticalLayoutGroup>();
-            tabLayout.padding = new RectOffset(8, 8, 8, 8);
+            tabLayout.padding = new RectOffset(10, 10, 10, 10);
             tabLayout.spacing = 6f;
             tabLayout.childControlHeight = true;
             tabLayout.childControlWidth = true;
             tabLayout.childForceExpandHeight = false;
 
             ScrollRect scroll = _widgets.CreateScrollView("ContentScroll", _panel.transform, out _content);
-            HeliosWidgetFactory.Anchor(scroll.GetComponent<RectTransform>(), new Vector2(0f, 0f), Vector2.one, new Vector2(188f, 8f), new Vector2(-8f, -68f));
+            HeliosWidgetFactory.Anchor(scroll.GetComponent<RectTransform>(), new Vector2(0f, 0f), Vector2.one, new Vector2(220f, 10f), new Vector2(-10f, -70f));
 
             _overlayRoot = _widgets.CreatePanel("Overlays", canvasGo.transform, Color.clear);
             HeliosWidgetFactory.Stretch(_overlayRoot.GetComponent<RectTransform>());
             _overlayRoot.GetComponent<Image>().raycastTarget = false;
 
-            _trigger = _widgets.CreateButton("Trigger", canvasGo.transform, _service.Settings.TriggerLabel, OnTriggerClicked).gameObject;
+            Button trigger = _widgets.CreateButton(
+                "Trigger",
+                canvasGo.transform,
+                _service.Settings.TriggerLabel,
+                OnTriggerClicked,
+                HeliosButtonStyle.Primary(_widgets.Theme));
+            trigger.GetComponent<Image>().sprite = HeliosShapeLibrary.Circle();
+            _trigger = trigger.gameObject;
             RectTransform triggerRect = _trigger.GetComponent<RectTransform>();
             ApplyTriggerLayout(triggerRect);
             if (_service.Settings.TriggerActivation == HeliosTriggerActivation.TapAndHold)
@@ -221,16 +238,98 @@ namespace HeliosDebugger
             for (int i = 0; i < _service.Tabs.Count; i++)
             {
                 IHeliosTab tab = _service.Tabs[i];
-                Button button = _widgets.CreateButton($"Tab_{tab.Title}", tabRoot, tab.Title, () =>
+                Button button = CreateTabButton(tabRoot, tab, i, () =>
                 {
                     _service.OpenTab(tab.GetType());
+                    RefreshTabSelection();
                     RebuildActiveTab();
                 });
-                _widgets.AddLayout(button.gameObject, 40f);
+                _widgets.AddLayout(button.gameObject, 38f);
                 _tabButtons.Add(button);
             }
 
+            RefreshTabSelection();
             RebuildActiveTab();
+        }
+
+        private Button CreateTabButton(Transform tabRoot, IHeliosTab tab, int index, UnityEngine.Events.UnityAction action)
+        {
+            Button button = _widgets.CreateButton(
+                $"Tab_{tab.Title}",
+                tabRoot,
+                string.Empty,
+                action,
+                HeliosButtonStyle.Ghost(_widgets.Theme));
+
+            Sprite icon = tab is IHeliosTabIcon tabIcon ? tabIcon.Icon : null;
+            if (icon != null)
+            {
+                Image iconImage = _widgets.AddIcon(button.transform, icon, _widgets.Theme.MutedText, 18f);
+                iconImage.name = "TabIcon";
+                RectTransform iconRect = iconImage.rectTransform;
+                iconRect.anchorMin = new Vector2(0f, 0.5f);
+                iconRect.anchorMax = new Vector2(0f, 0.5f);
+                iconRect.anchoredPosition = new Vector2(19f, 0f);
+            }
+            else
+            {
+                TextMeshProUGUI monogram = _widgets.CreateText("TabIcon", button.transform, GetMonogram(tab.Title), 12, TextAnchor.MiddleCenter);
+                monogram.color = _widgets.Theme.MutedText;
+                monogram.fontStyle = FontStyles.Bold;
+                HeliosWidgetFactory.Anchor(monogram.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(10f, -11f), new Vector2(32f, 11f));
+            }
+
+            TextMeshProUGUI label = _widgets.CreateText("TabLabel", button.transform, tab.Title, _widgets.Theme.BaseFontSize, TextAnchor.MiddleLeft);
+            label.fontStyle = FontStyles.Bold;
+            label.color = _widgets.Theme.MutedText;
+            HeliosWidgetFactory.Stretch(label.rectTransform, 42f, 0f, 38f, 0f);
+
+            TextMeshProUGUI shortcut = _widgets.CreateText("Shortcut", button.transform, (index + 1).ToString(), _widgets.Theme.CaptionFontSize, TextAnchor.MiddleRight);
+            shortcut.color = _widgets.Theme.MutedText;
+            HeliosWidgetFactory.Stretch(shortcut.rectTransform, 0f, 0f, 12f, 0f);
+
+            GameObject accent = _widgets.CreateSurface("ActiveAccent", button.transform, _widgets.Theme.Accent, 999f);
+            RectTransform accentRect = accent.GetComponent<RectTransform>();
+            HeliosWidgetFactory.Anchor(accentRect, new Vector2(0f, 0.18f), new Vector2(0f, 0.82f), new Vector2(0f, 0f), new Vector2(3f, 0f));
+            accent.SetActive(false);
+            return button;
+        }
+
+        private void RefreshTabSelection()
+        {
+            for (int i = 0; i < _tabButtons.Count && i < _service.Tabs.Count; i++)
+            {
+                Button button = _tabButtons[i];
+                bool active = _service.ActiveTab != null && _service.ActiveTab.GetType() == _service.Tabs[i].GetType();
+                Image background = button.targetGraphic as Image;
+                if (background != null)
+                    background.color = active ? _widgets.Theme.Selected : Color.clear;
+
+                SetChildColor(button.transform, "TabLabel", active ? _widgets.Theme.Text : _widgets.Theme.MutedText);
+                SetChildColor(button.transform, "Shortcut", active ? _widgets.Theme.Accent : _widgets.Theme.MutedText);
+                SetChildColor(button.transform, "TabIcon", active ? _widgets.Theme.Accent : _widgets.Theme.MutedText);
+                Transform accent = button.transform.Find("ActiveAccent");
+                if (accent != null)
+                    accent.gameObject.SetActive(active);
+            }
+        }
+
+        private static void SetChildColor(Transform parent, string childName, Color color)
+        {
+            Transform child = parent.Find(childName);
+            if (child == null)
+                return;
+            TextMeshProUGUI text = child.GetComponent<TextMeshProUGUI>();
+            if (text != null)
+                text.color = color;
+            Image image = child.GetComponent<Image>();
+            if (image != null)
+                image.color = color;
+        }
+
+        private static string GetMonogram(string title)
+        {
+            return string.IsNullOrWhiteSpace(title) ? "?" : title.Trim()[0].ToString().ToUpperInvariant();
         }
 
         private void OnVisibilityChanged()
@@ -410,6 +509,7 @@ namespace HeliosDebugger
             if (index < 0 || index >= _service.Tabs.Count)
                 return;
             _service.OpenTab(_service.Tabs[index].GetType());
+            RefreshTabSelection();
             RebuildActiveTab();
         }
 
@@ -464,10 +564,12 @@ namespace HeliosDebugger
 
         private void BuildChallengePanel(Transform canvasRoot)
         {
-            _challengePanel = _widgets.CreatePanel("AccessChallenge", canvasRoot, new Color(0f, 0f, 0f, 0.78f));
+            _challengePanel = _widgets.CreateSurface("AccessChallenge", canvasRoot, new Color(0f, 0f, 0f, 0.78f), 0f);
             HeliosWidgetFactory.Stretch(_challengePanel.GetComponent<RectTransform>());
 
-            GameObject card = _widgets.CreatePanel("Card", _challengePanel.transform, _widgets.Theme.Header);
+            GameObject card = _widgets.CreateSurface("Card", _challengePanel.transform, _widgets.Theme.Elevated, _widgets.Theme.CardCornerRadius);
+            _widgets.AddShadow(card);
+            _widgets.AddBorder(card, _widgets.Theme.Border);
             RectTransform cardRect = card.GetComponent<RectTransform>();
             HeliosWidgetFactory.Anchor(
                 cardRect,
@@ -476,11 +578,12 @@ namespace HeliosDebugger
                 new Vector2(-220f, -100f),
                 new Vector2(220f, 100f));
 
-            Text title = _widgets.CreateText("Title", card.transform, "Helios access", 20, TextAnchor.MiddleCenter);
+            TextMeshProUGUI title = _widgets.CreateText("Title", card.transform, "Helios access", 20, TextAnchor.MiddleCenter);
+            title.fontStyle = FontStyles.Bold;
             HeliosWidgetFactory.Anchor(title.rectTransform, new Vector2(0f, 0.7f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
 
             _challengeInput = _widgets.CreateInput("Pin", card.transform, "PIN", null);
-            _challengeInput.contentType = InputField.ContentType.Password;
+            _challengeInput.contentType = TMP_InputField.ContentType.Password;
             HeliosWidgetFactory.Anchor(
                 _challengeInput.GetComponent<RectTransform>(),
                 new Vector2(0.08f, 0.43f),
@@ -488,7 +591,7 @@ namespace HeliosDebugger
                 Vector2.zero,
                 Vector2.zero);
 
-            Button unlock = _widgets.CreateButton("Unlock", card.transform, "Unlock", SubmitChallenge);
+            Button unlock = _widgets.CreateButton("Unlock", card.transform, "Unlock", SubmitChallenge, HeliosButtonStyle.Primary(_widgets.Theme));
             HeliosWidgetFactory.Anchor(
                 unlock.GetComponent<RectTransform>(),
                 new Vector2(0.72f, 0.43f),

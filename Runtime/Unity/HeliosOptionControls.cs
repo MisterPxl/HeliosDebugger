@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -57,7 +58,7 @@ namespace HeliosDebugger
 
         public void Build(HeliosOptionControlContext context, IHeliosValueOption option)
         {
-            Text value = context.Widgets.CreateText("Value", context.Parent, option.GetDisplayValue(), 14, TextAnchor.MiddleRight);
+            TextMeshProUGUI value = context.Widgets.CreateText("Value", context.Parent, option.GetDisplayValue(), 14, TextAnchor.MiddleRight);
             context.Widgets.AddLayout(value.gameObject, -1f, 32f);
             context.RegisterRefresh(() => value.text = option.GetDisplayValue());
         }
@@ -70,14 +71,14 @@ namespace HeliosDebugger
 
         public void Build(HeliosOptionControlContext context, IHeliosValueOption option)
         {
-            Button button = context.Widgets.CreateButton("Toggle", context.Parent, option.GetDisplayValue(), null);
-            Text label = button.GetComponentInChildren<Text>();
-            button.onClick.AddListener(() =>
+            bool isOn = option.GetValue() is bool boolValue && boolValue;
+            HeliosSwitchControl control = context.Widgets.CreateSwitch("Toggle", context.Parent, isOn, option.GetDisplayValue(), null);
+            control.Button.onClick.AddListener(() =>
             {
                 option.ToggleBoolean();
-                label.text = option.GetDisplayValue();
+                control.SetValue(option.GetValue() is bool current && current, option.GetDisplayValue());
             });
-            context.RegisterRefresh(() => label.text = option.GetDisplayValue());
+            context.RegisterRefresh(() => control.SetValue(option.GetValue() is bool current && current, option.GetDisplayValue()));
         }
     }
 
@@ -89,7 +90,7 @@ namespace HeliosDebugger
         public void Build(HeliosOptionControlContext context, IHeliosValueOption option)
         {
             Button button = context.Widgets.CreateButton("Enum", context.Parent, option.GetDisplayValue(), null);
-            Text label = button.GetComponentInChildren<Text>();
+            TextMeshProUGUI label = HeliosWidgetFactory.GetButtonLabel(button);
             button.onClick.AddListener(() =>
             {
                 option.CycleEnum();
@@ -118,7 +119,7 @@ namespace HeliosDebugger
             Button minus = context.Widgets.CreateButton("Minus", context.Parent, "-", () => option.Adjust(-1f));
             context.Widgets.AddLayout(minus.gameObject, 32f);
             minus.GetComponent<LayoutElement>().preferredWidth = 36f;
-            InputField value = context.Widgets.CreateInput("Value", context.Parent, option.GetDisplayValue(), null);
+            TMP_InputField value = context.Widgets.CreateInput("Value", context.Parent, option.GetDisplayValue(), null);
             value.text = option.GetDisplayValue();
             value.onEndEdit.AddListener(text =>
             {
@@ -140,7 +141,7 @@ namespace HeliosDebugger
 
         public void Build(HeliosOptionControlContext context, IHeliosValueOption option)
         {
-            InputField input = context.Widgets.CreateInput("Value", context.Parent, option.GetDisplayValue(), null);
+            TMP_InputField input = context.Widgets.CreateInput("Value", context.Parent, option.GetDisplayValue(), null);
             input.text = option.GetDisplayValue();
             input.onEndEdit.AddListener(text =>
             {
@@ -177,7 +178,7 @@ namespace HeliosDebugger
                 swatchObject.GetComponent<LayoutElement>().preferredWidth = 32f;
             }
 
-            InputField input = context.Widgets.CreateInput("Components", context.Parent, option.GetDisplayValue(), null);
+            TMP_InputField input = context.Widgets.CreateInput("Components", context.Parent, option.GetDisplayValue(), null);
             input.text = option.GetDisplayValue();
             input.onEndEdit.AddListener(text =>
             {
@@ -188,7 +189,7 @@ namespace HeliosDebugger
             context.RegisterRefresh(() => Refresh(input, swatch, option));
         }
 
-        private static void Refresh(InputField input, Image swatch, IHeliosValueOption option)
+        private static void Refresh(TMP_InputField input, Image swatch, IHeliosValueOption option)
         {
             if (!input.isFocused)
                 input.text = option.GetDisplayValue();
@@ -204,7 +205,7 @@ namespace HeliosDebugger
 
         public void Build(HeliosOptionControlContext context, IHeliosValueOption option)
         {
-            Text value = context.Widgets.CreateText("Unsupported", context.Parent, option.GetDisplayValue(), 14, TextAnchor.MiddleRight);
+            TextMeshProUGUI value = context.Widgets.CreateText("Unsupported", context.Parent, option.GetDisplayValue(), 14, TextAnchor.MiddleRight);
             context.Widgets.AddLayout(value.gameObject, -1f, 32f);
             context.RegisterRefresh(() => value.text = option.GetDisplayValue());
         }
