@@ -104,6 +104,8 @@ namespace HeliosDebugger
         private readonly Font _font;
         private readonly TMP_FontAsset _fontAsset;
         private readonly HeliosThemeProfile _theme;
+        private readonly bool _ownsFont;
+        private readonly bool _ownsFontAsset;
         private static bool _fontWarningLogged;
         private static TMP_Settings _runtimeTmpSettings;
 
@@ -112,11 +114,27 @@ namespace HeliosDebugger
             _theme = theme != null ? theme : HeliosThemeProfile.CreateRuntimeDefault();
             _font = Resources.Load<Font>("HeliosDebugger/Fonts/Inter-Regular");
             if (_font == null)
+            {
                 _font = Font.CreateDynamicFontFromOSFont("Arial", _theme.BaseFontSize);
-            _fontAsset = ResolveFontAsset(_font);
+                _ownsFont = _font != null;
+            }
+
+            _fontAsset = ResolveFontAsset(_font, out _ownsFontAsset);
         }
 
         public HeliosThemeProfile Theme => _theme;
+
+        /// <summary>
+        /// Destroys the font assets this factory generated at runtime. Loaded
+        /// asset fonts are left untouched. Call when the owning UI is torn down.
+        /// </summary>
+        public void DestroyGeneratedAssets()
+        {
+            if (_ownsFontAsset)
+                HeliosObjectUtility.Destroy(_fontAsset);
+            if (_ownsFont)
+                HeliosObjectUtility.Destroy(_font);
+        }
 
         public GameObject CreatePanel(string name, Transform parent, Color color)
         {
@@ -533,11 +551,12 @@ namespace HeliosDebugger
             }
         }
 
-        private static TMP_FontAsset ResolveFontAsset(Font font)
+        private static TMP_FontAsset ResolveFontAsset(Font font, out bool generatedAtRuntime)
         {
             EnsureRuntimeTmpSettings();
 
             TMP_FontAsset generated = CreateFontAsset(font);
+            generatedAtRuntime = generated != null;
             if (generated != null)
                 return generated;
 

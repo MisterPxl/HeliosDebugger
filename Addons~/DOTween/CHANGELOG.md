@@ -2,6 +2,13 @@
 
 All notable changes to the Helios Debugger DOTween addon are documented here.
 
+## [1.1.3] - 2026-08-10
+
+### Changed
+
+- Tweens tab snapshots refresh at most four times per second, matching the
+  documented runtime behavior.
+
 ## [1.1.2] - 2026-08-10
 
 ### Added

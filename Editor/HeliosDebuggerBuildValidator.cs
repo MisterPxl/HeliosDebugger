@@ -26,6 +26,17 @@ namespace HeliosDebugger.Editor
                 UnityEngine.Debug.LogWarning(message);
             }
 
+            if (releaseBuild && settings.AllowInReleaseBuild && settings.DevelopmentBuildOnly)
+            {
+                // Allow In Release Build passes validation, but the runtime
+                // bootstrap still refuses non-development players while
+                // Development Build Only is set, producing an inert Helios.
+                throw new BuildFailedException(
+                    "HeliosDebugger settings are contradictory: Allow In Release Build is enabled " +
+                    "but Development Build Only is still set, so the runtime would never bootstrap " +
+                    "in this release player. Disable Development Build Only (or Allow In Release Build).");
+            }
+
             if (!string.IsNullOrWhiteSpace(settings.WebhookUrl) &&
                 !HeliosWebhookReportTransport.IsValidEndpoint(settings.WebhookUrl))
             {

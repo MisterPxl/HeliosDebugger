@@ -1,26 +1,29 @@
 #if !HELIOS_DEBUGGER_DISABLE
 using UnityEngine;
 
-public sealed class HeliosDebuggerDynamicExampleGui : MonoBehaviour
+namespace HeliosDebugger.Samples
 {
-    [SerializeField] private HeliosDebuggerDynamicExample _dynamicExample;
-
-    private void OnGUI()
+    public sealed class HeliosDebuggerDynamicExampleGui : MonoBehaviour
     {
-        if (_dynamicExample == null)
-            return;
+        [SerializeField] private HeliosDebuggerDynamicExample _dynamicExample;
 
-        Rect area = new Rect(24f, 24f, 360f, 72f);
-        GUILayout.BeginArea(area, GUI.skin.box);
-        GUILayout.Label("Helios dynamic sample");
+        private void OnGUI()
+        {
+            if (_dynamicExample == null)
+                return;
 
-        bool nextEnabled = GUILayout.Toggle(
-            _dynamicExample.IsEnemySpeedOptionEnabled,
-            "Show Enemy Speed option");
-        if (nextEnabled != _dynamicExample.IsEnemySpeedOptionEnabled)
-            _dynamicExample.SetEnemySpeedOptionEnabled(nextEnabled);
+            Rect area = new Rect(24f, 24f, 360f, 72f);
+            GUILayout.BeginArea(area, GUI.skin.box);
+            GUILayout.Label("Helios dynamic sample");
 
-        GUILayout.EndArea();
+            bool nextEnabled = GUILayout.Toggle(
+                _dynamicExample.IsEnemySpeedOptionEnabled,
+                "Show Enemy Speed option");
+            if (nextEnabled != _dynamicExample.IsEnemySpeedOptionEnabled)
+                _dynamicExample.SetEnemySpeedOptionEnabled(nextEnabled);
+
+            GUILayout.EndArea();
+        }
     }
 }
 #endif

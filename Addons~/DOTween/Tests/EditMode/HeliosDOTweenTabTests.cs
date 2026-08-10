@@ -52,18 +52,18 @@ namespace HeliosDebugger.DOTween.Tests
         }
 
         [Test]
-        public void RefreshIsThrottledToTenthSecond()
+        public void RefreshIsThrottledToQuarterSecond()
         {
             FakeMonitor monitor = new FakeMonitor();
             float now = 0f;
             HeliosDOTweenTab tab = BuildTab(monitor, () => now);
             Assert.AreEqual(1, monitor.CaptureCount);
 
-            now = 0.05f;
+            now = 0.1f;
             tab.Refresh();
             Assert.AreEqual(1, monitor.CaptureCount);
 
-            now = 0.1f;
+            now = 0.25f;
             tab.Refresh();
             Assert.AreEqual(2, monitor.CaptureCount);
         }

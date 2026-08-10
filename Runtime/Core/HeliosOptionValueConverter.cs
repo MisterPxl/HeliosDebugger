@@ -126,7 +126,7 @@ namespace HeliosDebugger
                 throw new ArgumentNullException(nameof(valueType));
             if (value == null)
                 return "<null>";
-            if (!valueType.IsInstanceOfType(value) && !valueType.IsValueType)
+            if (!valueType.IsInstanceOfType(value))
                 throw new ArgumentException($"Value is not assignable to {valueType.Name}.", nameof(value));
 
             if (valueType == typeof(float))

@@ -4,6 +4,37 @@ All notable changes to the Helios Debugger package are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the package adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.3.1] - 2026-08-10
+
+### Added
+
+- Report redaction now also catches standalone JWTs, bearer tokens, email
+  addresses, and compact secret key spellings such as `accessToken`.
+- Runtime UI respects screen safe areas and supports additional keyboard toggle
+  keys including function, navigation, punctuation, and keypad keys.
+- Runtime-generated icons, shapes, and fallback font assets can be released when
+  the debugger shuts down.
+
+### Changed
+
+- Persisted options batch `PlayerPrefs.Save()` through the debugger root instead
+  of saving synchronously on every value change.
+- Screenshots are downscaled to a 1920px maximum dimension before being attached
+  to reports, and oversized screenshots or attachments are skipped instead of
+  failing the whole report.
+
+### Fixed
+
+- Build validation rejects contradictory release settings where
+  `Allow In Release Build` is enabled while `Development Build Only` still
+  prevents runtime bootstrap.
+- Option persistence keys use member names instead of editable display names,
+  property scanning skips getter-less properties, and enum cycling ignores empty
+  enums.
+- Overlay replacement and tab unregistration no longer bypass service disposal
+  safeguards.
+- Sample scripts live in the `HeliosDebugger.Samples` namespace.
+
 ## [2.3.0] - 2026-08-10
 
 ### Added

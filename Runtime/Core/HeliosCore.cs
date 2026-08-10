@@ -259,7 +259,7 @@ namespace HeliosDebugger
 
         internal bool UnregisterTab(Type tabType)
         {
-            if (tabType == null)
+            if (_disposed || tabType == null)
                 return false;
 
             for (int i = 0; i < _tabs.Count; i++)
@@ -351,7 +351,7 @@ namespace HeliosDebugger
             {
                 if (string.Equals(_overlays[i].Id, overlay.Id, StringComparison.Ordinal))
                 {
-                    _overlays[i].Dispose();
+                    DisposeOverlaySafely(_overlays[i]);
                     _overlays[i] = overlay;
                     if (_context != null)
                         overlay.Initialize(new HeliosOverlayContext(this, _context.Root));

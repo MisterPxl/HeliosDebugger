@@ -193,6 +193,9 @@ namespace HeliosDebugger
                 return;
 
             Array values = Enum.GetValues(ValueType);
+            if (values.Length == 0)
+                return;
+
             object current = GetValue();
             int index = Array.IndexOf(values, current);
             object next = values.GetValue((index + 1) % values.Length);

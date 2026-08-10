@@ -3,6 +3,21 @@ using UnityEngine;
 
 namespace HeliosDebugger
 {
+    internal static class HeliosObjectUtility
+    {
+        /// <summary>Destroys a runtime-generated object in play or edit mode.</summary>
+        public static void Destroy(Object target)
+        {
+            if (target == null)
+                return;
+
+            if (Application.isPlaying)
+                Object.Destroy(target);
+            else
+                Object.DestroyImmediate(target);
+        }
+    }
+
     public static class HeliosShapeLibrary
     {
         private const int TextureSize = 64;
@@ -63,6 +78,32 @@ namespace HeliosDebugger
                 new Vector4(24f, 24f, 24f, 24f));
             _softShadowSprite.name = "HeliosSoftShadow";
             return _softShadowSprite;
+        }
+
+        /// <summary>
+        /// Destroys every cached sprite and its backing texture. Called when
+        /// the debugger shuts down; sprites are lazily recreated on demand.
+        /// </summary>
+        public static void Clear()
+        {
+            foreach (KeyValuePair<int, Sprite> pair in RoundedSprites)
+                DestroySprite(pair.Value);
+            RoundedSprites.Clear();
+
+            DestroySprite(_circleSprite);
+            _circleSprite = null;
+            DestroySprite(_softShadowSprite);
+            _softShadowSprite = null;
+        }
+
+        private static void DestroySprite(Sprite sprite)
+        {
+            if (sprite == null)
+                return;
+
+            Texture2D texture = sprite.texture;
+            HeliosObjectUtility.Destroy(sprite);
+            HeliosObjectUtility.Destroy(texture);
         }
 
         private static Texture2D CreateRoundedRectTexture(int radius, bool shadow)

@@ -1,61 +1,63 @@
 #if !HELIOS_DEBUGGER_DISABLE
-using HeliosDebugger;
 using UnityEngine;
 
-public sealed class HeliosDebuggerDynamicExample : MonoBehaviour
+namespace HeliosDebugger.Samples
 {
-    private const string Category = "Dynamic Sample";
-
-    private HeliosDynamicOptionContainer _container;
-    private HeliosOptionDefinition<float> _enemySpeedOption;
-    private bool _isEnemySpeedOptionEnabled = true;
-    private float _enemySpeed = 1f;
-    private int _spawnedEnemies;
-
-    public bool IsEnemySpeedOptionEnabled => _isEnemySpeedOptionEnabled;
-
-    private void OnEnable()
+    public sealed class HeliosDebuggerDynamicExample : MonoBehaviour
     {
-        _container = new HeliosDynamicOptionContainer();
-        _enemySpeedOption = HeliosOptionDefinition.Create<float>(
-            "Enemy Speed",
-            () => _enemySpeed,
-            value => _enemySpeed = value,
-            Category);
-        _container.AddAction(HeliosOptionDefinition.FromMethod(
-            "Spawn Enemy",
-            () =>
-            {
-                _spawnedEnemies++;
-                Debug.Log($"Spawned enemy {_spawnedEnemies} at speed {_enemySpeed}.");
-            },
-            Category));
+        private const string Category = "Dynamic Sample";
 
-        Helios.AddOptionContainer(_container);
-        SetEnemySpeedOptionEnabled(_isEnemySpeedOptionEnabled);
-    }
+        private HeliosDynamicOptionContainer _container;
+        private HeliosOptionDefinition<float> _enemySpeedOption;
+        private bool _isEnemySpeedOptionEnabled = true;
+        private float _enemySpeed = 1f;
+        private int _spawnedEnemies;
 
-    private void OnDisable()
-    {
-        if (_container == null)
-            return;
+        public bool IsEnemySpeedOptionEnabled => _isEnemySpeedOptionEnabled;
 
-        Helios.RemoveOptionContainer(_container);
-        _container = null;
-        _enemySpeedOption = null;
-    }
+        private void OnEnable()
+        {
+            _container = new HeliosDynamicOptionContainer();
+            _enemySpeedOption = HeliosOptionDefinition.Create<float>(
+                "Enemy Speed",
+                () => _enemySpeed,
+                value => _enemySpeed = value,
+                Category);
+            _container.AddAction(HeliosOptionDefinition.FromMethod(
+                "Spawn Enemy",
+                () =>
+                {
+                    _spawnedEnemies++;
+                    Debug.Log($"Spawned enemy {_spawnedEnemies} at speed {_enemySpeed}.");
+                },
+                Category));
 
-    public void SetEnemySpeedOptionEnabled(bool isEnabled)
-    {
-        _isEnemySpeedOptionEnabled = isEnabled;
+            Helios.AddOptionContainer(_container);
+            SetEnemySpeedOptionEnabled(_isEnemySpeedOptionEnabled);
+        }
 
-        if (_container == null || _enemySpeedOption == null)
-            return;
+        private void OnDisable()
+        {
+            if (_container == null)
+                return;
 
-        if (isEnabled)
-            _container.AddOption(_enemySpeedOption);
-        else
-            _container.RemoveOption(_enemySpeedOption);
+            Helios.RemoveOptionContainer(_container);
+            _container = null;
+            _enemySpeedOption = null;
+        }
+
+        public void SetEnemySpeedOptionEnabled(bool isEnabled)
+        {
+            _isEnemySpeedOptionEnabled = isEnabled;
+
+            if (_container == null || _enemySpeedOption == null)
+                return;
+
+            if (isEnabled)
+                _container.AddOption(_enemySpeedOption);
+            else
+                _container.RemoveOption(_enemySpeedOption);
+        }
     }
 }
 #endif

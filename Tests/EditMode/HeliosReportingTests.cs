@@ -59,6 +59,23 @@ namespace HeliosDebugger.Tests
             StringAssert.DoesNotContain("secret-value", value);
         }
 
+        [Test]
+        public void RedactorRemovesStandaloneSecretShapes()
+        {
+            HeliosReportRedactor redactor = new HeliosReportRedactor();
+
+            string jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0In0.sflKxwRJSMeKKF2QT4";
+            string value = redactor.Redact(
+                $"jwt {jwt}\nheader Bearer abc.DEF-123\ncontact user.name+tag@example.co.uk\ncamel accessToken=xyz");
+
+            StringAssert.DoesNotContain("eyJhbGciOiJIUzI1NiI", value);
+            StringAssert.DoesNotContain("abc.DEF-123", value);
+            StringAssert.DoesNotContain("user.name+tag@example.co.uk", value);
+            StringAssert.DoesNotContain("xyz", value);
+            StringAssert.Contains("jwt <redacted>", value);
+            StringAssert.Contains("contact <redacted>", value);
+        }
+
         private sealed class FakeTransport : IHeliosReportTransport
         {
             public FakeTransport(HeliosTransportId id)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace HeliosDebugger
 {
@@ -15,24 +16,53 @@ namespace HeliosDebugger
         {
             "authorization",
             "access_token",
+            "accesstoken",
             "refresh_token",
+            "refreshtoken",
             "client_secret",
+            "clientsecret",
             "api_key",
             "api-key",
+            "apikey",
             "password",
             "secret",
             "token"
         };
 
+        // Standalone secret shapes that appear without a key=value context:
+        // JWTs (base64url of {"..." always starts with "eyJ"), bearer tokens,
+        // and email addresses. Applied after the key/value pass.
+        private static readonly Regex[] DefaultSensitivePatterns =
+        {
+            new Regex(
+                @"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]*",
+                RegexOptions.CultureInvariant),
+            new Regex(
+                @"\bBearer[ \t]+[A-Za-z0-9\-._~+/]+=*",
+                RegexOptions.CultureInvariant | RegexOptions.IgnoreCase),
+            new Regex(
+                @"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}",
+                RegexOptions.CultureInvariant)
+        };
+
         private readonly List<string> _sensitiveKeys;
+        private readonly List<Regex> _sensitivePatterns;
         private readonly string _replacement;
 
         public HeliosReportRedactor()
-            : this(DefaultSensitiveKeys, "<redacted>")
+            : this(DefaultSensitiveKeys, DefaultSensitivePatterns, "<redacted>")
         {
         }
 
         public HeliosReportRedactor(IEnumerable<string> sensitiveKeys, string replacement)
+            : this(sensitiveKeys, DefaultSensitivePatterns, replacement)
+        {
+        }
+
+        public HeliosReportRedactor(
+            IEnumerable<string> sensitiveKeys,
+            IEnumerable<Regex> sensitivePatterns,
+            string replacement)
         {
             if (sensitiveKeys == null)
                 throw new ArgumentNullException("sensitiveKeys");
@@ -45,10 +75,37 @@ namespace HeliosDebugger
             }
 
             _sensitiveKeys.Sort(CompareLongestFirst);
+
+            _sensitivePatterns = new List<Regex>();
+            if (sensitivePatterns != null)
+            {
+                foreach (Regex pattern in sensitivePatterns)
+                {
+                    if (pattern != null)
+                        _sensitivePatterns.Add(pattern);
+                }
+            }
+
             _replacement = replacement ?? string.Empty;
         }
 
         public string Redact(string text)
+        {
+            return ApplyPatterns(RedactKeyedValues(text));
+        }
+
+        private string ApplyPatterns(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text ?? string.Empty;
+
+            string result = text;
+            for (int i = 0; i < _sensitivePatterns.Count; i++)
+                result = _sensitivePatterns[i].Replace(result, _replacement);
+            return result;
+        }
+
+        private string RedactKeyedValues(string text)
         {
             if (string.IsNullOrEmpty(text) || _sensitiveKeys.Count == 0)
                 return text ?? string.Empty;

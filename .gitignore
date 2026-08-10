@@ -33,3 +33,11 @@
 *.user
 .DS_Store
 .idea/
+
+# Unity test runner artifacts
+/unity-*.log
+/unity-*.log.meta
+/test-results-*.xml
+/test-results-*.xml.meta
+/UnityProject~/Assets/InitTestScene*.unity
+/UnityProject~/Assets/InitTestScene*.unity.meta

@@ -60,6 +60,23 @@ namespace HeliosDebugger
                 RegisteredSets.Add(iconSet);
         }
 
+        public static bool Unregister(HeliosIconSet iconSet)
+        {
+            return iconSet != null && RegisteredSets.Remove(iconSet);
+        }
+
+        /// <summary>
+        /// Destroys the sprites generated from Resources textures. The source
+        /// textures are assets and are left untouched; sprites are recreated
+        /// lazily on the next lookup.
+        /// </summary>
+        public static void ClearCache()
+        {
+            foreach (KeyValuePair<string, Sprite> pair in ResourceSprites)
+                HeliosObjectUtility.Destroy(pair.Value);
+            ResourceSprites.Clear();
+        }
+
         public static Sprite Get(string id)
         {
             if (string.IsNullOrEmpty(id))

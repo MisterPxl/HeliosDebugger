@@ -26,7 +26,8 @@ namespace HeliosDebugger.DOTween
 
     public sealed class HeliosDOTweenTab : HeliosTabBase, IHeliosTabIcon
     {
-        private const float RefreshInterval = 0.1f;
+        // Documented behaviour: snapshots refresh at most four times per second.
+        private const float RefreshInterval = 0.25f;
         private const float KillConfirmationDuration = 3f;
 
         private readonly IDOTweenMonitor _monitor;

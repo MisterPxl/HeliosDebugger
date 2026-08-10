@@ -12,12 +12,18 @@ namespace HeliosDebugger
     [DefaultExecutionOrder(-9000)]
     public sealed class HeliosDebuggerRoot : MonoBehaviour
     {
+        private const float PanelMarginX = 64f;
+        private const float PanelMarginY = 48f;
+
         private readonly List<Button> _tabButtons = new List<Button>();
         private HeliosService _service;
         private HeliosWidgetFactory _widgets;
         private Canvas _canvas;
         private GameObject _panel;
         private GameObject _trigger;
+        private RectTransform _panelRect;
+        private RectTransform _triggerRect;
+        private Rect _lastSafeArea;
         private GameObject _overlayRoot;
         private GameObject _challengePanel;
         private TMP_InputField _challengeInput;
@@ -91,10 +97,22 @@ namespace HeliosDebugger
                 for (int i = 0; i < _service.Overlays.Count; i++)
                     _service.Overlays[i].Refresh();
             }
+
+            if (Screen.safeArea != _lastSafeArea)
+                ApplySafeArea();
+
+            HeliosPersistence.FlushIfDirty();
+        }
+
+        private void OnApplicationPause(bool paused)
+        {
+            if (paused)
+                HeliosPersistence.FlushIfDirty();
         }
 
         private void OnDestroy()
         {
+            HeliosPersistence.FlushIfDirty();
             if (_service != null)
             {
                 _service.VisibilityChanged -= OnVisibilityChanged;
@@ -103,6 +121,11 @@ namespace HeliosDebugger
                 _service.Access.ChallengeRequested -= OnAccessChallengeRequested;
                 Helios.Shutdown();
             }
+
+            if (_widgets != null)
+                _widgets.DestroyGeneratedAssets();
+            HeliosShapeLibrary.Clear();
+            HeliosIcons.ClearCache();
         }
 
         public Coroutine Run(IEnumerator routine)
@@ -167,8 +190,13 @@ namespace HeliosDebugger
             _panel = _widgets.CreateSurface("Panel", canvasGo.transform, panelColor, _widgets.Theme.CardCornerRadius);
             _widgets.AddShadow(_panel);
             _widgets.AddBorder(_panel, _widgets.Theme.Border);
-            RectTransform panelRect = _panel.GetComponent<RectTransform>();
-            HeliosWidgetFactory.Anchor(panelRect, Vector2.zero, Vector2.one, new Vector2(64f, 48f), new Vector2(-64f, -48f));
+            _panelRect = _panel.GetComponent<RectTransform>();
+            HeliosWidgetFactory.Anchor(
+                _panelRect,
+                Vector2.zero,
+                Vector2.one,
+                new Vector2(PanelMarginX, PanelMarginY),
+                new Vector2(-PanelMarginX, -PanelMarginY));
 
             GameObject header = _widgets.CreateSurface("Header", _panel.transform, _widgets.Theme.Header, _widgets.Theme.CardCornerRadius);
             RectTransform headerRect = header.GetComponent<RectTransform>();
@@ -209,8 +237,9 @@ namespace HeliosDebugger
                 HeliosButtonStyle.Primary(_widgets.Theme));
             trigger.GetComponent<Image>().sprite = HeliosShapeLibrary.Circle();
             _trigger = trigger.gameObject;
-            RectTransform triggerRect = _trigger.GetComponent<RectTransform>();
-            ApplyTriggerLayout(triggerRect);
+            _triggerRect = _trigger.GetComponent<RectTransform>();
+            ApplyTriggerLayout(_triggerRect);
+            ApplySafeArea();
             if (_service.Settings.TriggerActivation == HeliosTriggerActivation.TapAndHold)
             {
                 HeliosHoldTrigger hold = _trigger.AddComponent<HeliosHoldTrigger>();
@@ -483,6 +512,50 @@ namespace HeliosDebugger
                 case KeyCode.Escape: return Key.Escape;
                 case KeyCode.Return: return Key.Enter;
                 case KeyCode.Tab: return Key.Tab;
+                case KeyCode.F1: return Key.F1;
+                case KeyCode.F2: return Key.F2;
+                case KeyCode.F3: return Key.F3;
+                case KeyCode.F4: return Key.F4;
+                case KeyCode.F5: return Key.F5;
+                case KeyCode.F6: return Key.F6;
+                case KeyCode.F7: return Key.F7;
+                case KeyCode.F8: return Key.F8;
+                case KeyCode.F9: return Key.F9;
+                case KeyCode.F10: return Key.F10;
+                case KeyCode.F11: return Key.F11;
+                case KeyCode.F12: return Key.F12;
+                case KeyCode.UpArrow: return Key.UpArrow;
+                case KeyCode.DownArrow: return Key.DownArrow;
+                case KeyCode.LeftArrow: return Key.LeftArrow;
+                case KeyCode.RightArrow: return Key.RightArrow;
+                case KeyCode.Backspace: return Key.Backspace;
+                case KeyCode.Delete: return Key.Delete;
+                case KeyCode.Insert: return Key.Insert;
+                case KeyCode.Home: return Key.Home;
+                case KeyCode.End: return Key.End;
+                case KeyCode.PageUp: return Key.PageUp;
+                case KeyCode.PageDown: return Key.PageDown;
+                case KeyCode.Minus: return Key.Minus;
+                case KeyCode.Equals: return Key.Equals;
+                case KeyCode.LeftBracket: return Key.LeftBracket;
+                case KeyCode.RightBracket: return Key.RightBracket;
+                case KeyCode.Semicolon: return Key.Semicolon;
+                case KeyCode.Quote: return Key.Quote;
+                case KeyCode.Comma: return Key.Comma;
+                case KeyCode.Period: return Key.Period;
+                case KeyCode.Slash: return Key.Slash;
+                case KeyCode.Backslash: return Key.Backslash;
+                case KeyCode.Keypad0: return Key.Numpad0;
+                case KeyCode.Keypad1: return Key.Numpad1;
+                case KeyCode.Keypad2: return Key.Numpad2;
+                case KeyCode.Keypad3: return Key.Numpad3;
+                case KeyCode.Keypad4: return Key.Numpad4;
+                case KeyCode.Keypad5: return Key.Numpad5;
+                case KeyCode.Keypad6: return Key.Numpad6;
+                case KeyCode.Keypad7: return Key.Numpad7;
+                case KeyCode.Keypad8: return Key.Numpad8;
+                case KeyCode.Keypad9: return Key.Numpad9;
+                case KeyCode.KeypadEnter: return Key.NumpadEnter;
                 default: return Key.None;
             }
         }
@@ -526,6 +599,37 @@ namespace HeliosDebugger
             Vector2 offset = _service.Settings.TriggerOffset;
             rect.anchoredPosition = new Vector2(right ? -offset.x : offset.x, top ? -offset.y : offset.y);
             rect.sizeDelta = _service.Settings.TriggerSize;
+        }
+
+        private void ApplySafeArea()
+        {
+            _lastSafeArea = Screen.safeArea;
+            if (_canvas == null || _canvas.renderMode == RenderMode.WorldSpace)
+                return;
+
+            float scale = _canvas.scaleFactor > 0f ? _canvas.scaleFactor : 1f;
+            Rect safe = _lastSafeArea;
+            float left = safe.xMin / scale;
+            float bottom = safe.yMin / scale;
+            float right = (Screen.width - safe.xMax) / scale;
+            float top = (Screen.height - safe.yMax) / scale;
+
+            if (_panelRect != null)
+            {
+                _panelRect.offsetMin = new Vector2(PanelMarginX + left, PanelMarginY + bottom);
+                _panelRect.offsetMax = new Vector2(-(PanelMarginX + right), -(PanelMarginY + top));
+            }
+
+            if (_triggerRect != null)
+            {
+                HeliosTriggerCorner corner = _service.Settings.TriggerCorner;
+                bool cornerRight = corner == HeliosTriggerCorner.BottomRight || corner == HeliosTriggerCorner.TopRight;
+                bool cornerTop = corner == HeliosTriggerCorner.TopLeft || corner == HeliosTriggerCorner.TopRight;
+                Vector2 offset = _service.Settings.TriggerOffset;
+                _triggerRect.anchoredPosition = new Vector2(
+                    cornerRight ? -(offset.x + right) : offset.x + left,
+                    cornerTop ? -(offset.y + top) : offset.y + bottom);
+            }
         }
 
         private void ApplyCanvasPlacement()

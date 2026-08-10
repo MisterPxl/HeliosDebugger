@@ -252,7 +252,10 @@ namespace HeliosDebugger
                     continue;
 
                 MethodInfo getter = property.GetGetMethod(true);
-                bool isStatic = getter != null && getter.IsStatic;
+                if (getter == null)
+                    continue;
+
+                bool isStatic = getter.IsStatic;
                 object target = isStatic ? null : instance;
                 if (!isStatic && target == null)
                     continue;
@@ -517,7 +520,8 @@ namespace HeliosDebugger
             _property = property;
             Attribute = attribute;
             Category = FirstNonEmpty(attribute.Category, typeAttribute.Category, declaringType.Name);
-            DisplayName = FirstNonEmpty(attribute.DisplayName, field != null ? field.Name : property.Name);
+            MemberName = field != null ? field.Name : property.Name;
+            DisplayName = FirstNonEmpty(attribute.DisplayName, MemberName);
             Description = attribute.Description ?? string.Empty;
             Order = attribute.Order;
             Persist = attribute.Persist;
@@ -534,6 +538,7 @@ namespace HeliosDebugger
         public Type DeclaringType { get; }
         public HeliosOptionAttribute Attribute { get; }
         public string Category { get; }
+        public string MemberName { get; }
         public string DisplayName { get; }
         public string Description { get; }
         public int Order { get; }
@@ -543,7 +548,9 @@ namespace HeliosDebugger
         public Type ValueType { get; }
         public HeliosOptionValueKind ValueKind { get; }
         public HeliosRangeAttribute Range { get; }
-        public string PersistenceKey => $"HeliosOption.{DeclaringType.FullName}.{DisplayName}";
+        // Keyed on the member name rather than the display name: display names
+        // are editable labels and two options in one type may share one.
+        public string PersistenceKey => $"HeliosOption.{DeclaringType.FullName}.{MemberName}";
 
         public static HeliosOptionMember FromField(Type declaringType, object target, FieldInfo field, HeliosOptionAttribute attribute, HeliosOptionsAttribute typeAttribute)
         {
@@ -640,6 +647,9 @@ namespace HeliosDebugger
                 return;
 
             Array values = Enum.GetValues(ValueType);
+            if (values.Length == 0)
+                return;
+
             object current = GetValue();
             int index = Array.IndexOf(values, current);
             object next = values.GetValue((index + 1) % values.Length);
@@ -661,7 +671,7 @@ namespace HeliosDebugger
                 return;
 
             PlayerPrefs.SetString(PersistenceKey, GetDisplayValue());
-            PlayerPrefs.Save();
+            HeliosPersistence.MarkDirty();
         }
 
         public static HeliosOptionValueKind GetValueKind(Type type)

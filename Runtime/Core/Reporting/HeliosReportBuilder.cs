@@ -16,6 +16,20 @@ namespace HeliosDebugger
 
     public sealed class HeliosUnityScreenshotProvider : IHeliosScreenshotProvider
     {
+        public const int DefaultMaxDimension = 1920;
+
+        private readonly int _maxDimension;
+
+        public HeliosUnityScreenshotProvider()
+            : this(DefaultMaxDimension)
+        {
+        }
+
+        public HeliosUnityScreenshotProvider(int maxDimension)
+        {
+            _maxDimension = Mathf.Max(320, maxDimension);
+        }
+
         public IEnumerator Capture(
             HeliosReportOperationContext context,
             Action<HeliosReportArtifact, Exception> complete)
@@ -31,6 +45,7 @@ namespace HeliosDebugger
             yield return new WaitForEndOfFrame();
 
             Texture2D texture = null;
+            Texture2D scaled = null;
             HeliosReportArtifact artifact = null;
             Exception captureException = null;
             try
@@ -39,7 +54,8 @@ namespace HeliosDebugger
                 if (texture == null)
                     throw new InvalidOperationException("Unity did not return a screenshot texture.");
 
-                byte[] png = texture.EncodeToPNG();
+                scaled = Downscale(texture, _maxDimension);
+                byte[] png = scaled.EncodeToPNG();
                 artifact = new HeliosReportArtifact("screenshot.png", "image/png", png);
             }
             catch (Exception exception)
@@ -48,12 +64,42 @@ namespace HeliosDebugger
             }
             finally
             {
+                if (scaled != null && !ReferenceEquals(scaled, texture))
+                    UnityEngine.Object.Destroy(scaled);
                 if (texture != null)
                     UnityEngine.Object.Destroy(texture);
             }
 
             if (complete != null)
                 complete(artifact, captureException);
+        }
+
+        private static Texture2D Downscale(Texture2D source, int maxDimension)
+        {
+            int largest = Mathf.Max(source.width, source.height);
+            if (largest <= maxDimension)
+                return source;
+
+            float scale = (float)maxDimension / largest;
+            int width = Mathf.Max(1, Mathf.RoundToInt(source.width * scale));
+            int height = Mathf.Max(1, Mathf.RoundToInt(source.height * scale));
+
+            RenderTexture target = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32);
+            RenderTexture previous = RenderTexture.active;
+            try
+            {
+                Graphics.Blit(source, target);
+                RenderTexture.active = target;
+                Texture2D result = new Texture2D(width, height, TextureFormat.RGBA32, false);
+                result.ReadPixels(new Rect(0f, 0f, width, height), 0, 0);
+                result.Apply(false);
+                return result;
+            }
+            finally
+            {
+                RenderTexture.active = previous;
+                RenderTexture.ReleaseTemporary(target);
+            }
         }
     }
 
@@ -242,8 +288,10 @@ namespace HeliosDebugger
             }
             else if (!TryAdd(screenshot, maxBytes, artifacts, artifactNames, ref totalBytes, out error))
             {
-                Complete(complete, null, HeliosReportResult.Fail(error));
-                yield break;
+                // The screenshot is optional: dropping it beats failing the
+                // whole report when it does not fit the remaining budget.
+                operationContext.Report(
+                    "build.screenshot", 5, totalSteps, "Screenshot skipped: " + error);
             }
             else
             {
@@ -260,8 +308,12 @@ namespace HeliosDebugger
                 attachment = EnsureUniqueName(attachment, artifactNames);
                 if (!TryAdd(attachment, maxBytes, artifacts, artifactNames, ref totalBytes, out error))
                 {
-                    Complete(complete, null, HeliosReportResult.Fail(error));
-                    yield break;
+                    operationContext.Report(
+                        "build.attachment",
+                        6 + i,
+                        totalSteps,
+                        "Attachment '" + attachment.Name + "' skipped: " + error);
+                    continue;
                 }
 
                 operationContext.Report(
