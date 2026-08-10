@@ -62,20 +62,34 @@ namespace HeliosDebugger
         public const int SaltBytes = 16;
         public const int HashBytes = 32;
         public const int Iterations = 100000;
+        public const int FreeAttempts = 3;
+
+        private static readonly TimeSpan BaseRetryDelay = TimeSpan.FromSeconds(1d);
+        private static readonly TimeSpan MaxRetryDelay = TimeSpan.FromSeconds(60d);
 
         private readonly byte[] _salt;
         private readonly byte[] _expectedHash;
         private readonly TimeSpan _sessionDuration;
         private DateTime _unlockedUntilUtc;
+        private DateTime _retryNotBeforeUtc = DateTime.MinValue;
+        private int _consecutiveFailures;
 
         public HeliosPinAccessPolicy(string saltBase64, string hashBase64, TimeSpan sessionDuration)
         {
-            _salt = Decode(saltBase64, nameof(saltBase64));
-            _expectedHash = Decode(hashBase64, nameof(hashBase64));
+            _salt = Decode(saltBase64, nameof(saltBase64), SaltBytes);
+            _expectedHash = Decode(hashBase64, nameof(hashBase64), HashBytes);
             _sessionDuration = sessionDuration <= TimeSpan.Zero ? TimeSpan.FromMinutes(15d) : sessionDuration;
         }
 
         public bool IsUnlocked => DateTime.UtcNow < _unlockedUntilUtc;
+
+        /// <summary>
+        /// Earliest UTC time at which the next unlock attempt will be evaluated.
+        /// Attempts made before this time fail without being checked.
+        /// </summary>
+        public DateTime RetryNotBeforeUtc => _retryNotBeforeUtc;
+
+        public bool IsThrottled => DateTime.UtcNow < _retryNotBeforeUtc;
 
         public HeliosAccessDecision Evaluate(HeliosAccessRequest request)
         {
@@ -87,11 +101,29 @@ namespace HeliosDebugger
             if (string.IsNullOrEmpty(credential))
                 return false;
 
+            if (IsThrottled)
+                return false;
+
             byte[] candidate = DeriveHash(credential, _salt);
             bool valid = FixedTimeEquals(candidate, _expectedHash);
             if (valid)
+            {
                 _unlockedUntilUtc = DateTime.UtcNow.Add(_sessionDuration);
-            return valid;
+                _consecutiveFailures = 0;
+                _retryNotBeforeUtc = DateTime.MinValue;
+                return true;
+            }
+
+            _consecutiveFailures++;
+            if (_consecutiveFailures > FreeAttempts)
+            {
+                // Exponential backoff: 1s, 2s, 4s... capped at MaxRetryDelay.
+                double seconds = BaseRetryDelay.TotalSeconds * Math.Pow(2d, _consecutiveFailures - FreeAttempts - 1);
+                seconds = Math.Min(seconds, MaxRetryDelay.TotalSeconds);
+                _retryNotBeforeUtc = DateTime.UtcNow.AddSeconds(seconds);
+            }
+
+            return false;
         }
 
         public void Lock()
@@ -125,19 +157,27 @@ namespace HeliosDebugger
             }
         }
 
-        private static byte[] Decode(string value, string parameterName)
+        private static byte[] Decode(string value, string parameterName, int expectedBytes)
         {
             if (string.IsNullOrWhiteSpace(value))
                 throw new ArgumentException("PIN credentials are not configured.", parameterName);
 
+            byte[] decoded;
             try
             {
-                return Convert.FromBase64String(value);
+                decoded = Convert.FromBase64String(value);
             }
             catch (FormatException exception)
             {
                 throw new ArgumentException("PIN credentials are invalid.", parameterName, exception);
             }
+
+            if (decoded.Length != expectedBytes)
+                throw new ArgumentException(
+                    $"PIN credentials are invalid: expected {expectedBytes} bytes, got {decoded.Length}.",
+                    parameterName);
+
+            return decoded;
         }
 
         private static bool FixedTimeEquals(byte[] left, byte[] right)

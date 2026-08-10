@@ -5,9 +5,9 @@ namespace HeliosDebugger.Editor
 {
     public sealed class HeliosPinSetupWindow : EditorWindow
     {
-        private string _pin = string.Empty;
-        private string _confirmation = string.Empty;
-        private string _status = string.Empty;
+        [System.NonSerialized] private string _pin = string.Empty;
+        [System.NonSerialized] private string _confirmation = string.Empty;
+        [System.NonSerialized] private string _status = string.Empty;
 
         [MenuItem("Tools/HeliosDebugger/Configure Access PIN")]
         public static void ShowWindow()
@@ -54,7 +54,13 @@ namespace HeliosDebugger.Editor
             AssetDatabase.SaveAssets();
             _pin = string.Empty;
             _confirmation = string.Empty;
-            _status = "PIN hash saved.";
+            _status = "PIN hash saved. Require PIN has been enabled on the settings asset.";
+        }
+
+        private void OnDisable()
+        {
+            _pin = string.Empty;
+            _confirmation = string.Empty;
         }
     }
 }

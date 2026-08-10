@@ -2,7 +2,7 @@ using UnityEngine.InputSystem;
 
 namespace HeliosDebugger
 {
-    public sealed class HeliosShortcutContext
+    public readonly struct HeliosShortcutContext
     {
         public HeliosShortcutContext(HeliosService service, Keyboard keyboard, Gamepad gamepad)
         {

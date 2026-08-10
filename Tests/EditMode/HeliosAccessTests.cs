@@ -43,6 +43,29 @@ namespace HeliosDebugger.Tests
         }
 
         [Test]
+        public void RepeatedFailuresThrottleFurtherAttempts()
+        {
+            HeliosPinAccessPolicy.CreateCredentials("9876", out string salt, out string hash);
+            HeliosPinAccessPolicy policy = new HeliosPinAccessPolicy(salt, hash, TimeSpan.FromMinutes(1d));
+
+            for (int i = 0; i < HeliosPinAccessPolicy.FreeAttempts + 1; i++)
+                Assert.IsFalse(policy.TryUnlock("0000"));
+
+            Assert.IsTrue(policy.IsThrottled);
+            Assert.IsFalse(policy.TryUnlock("9876"), "The correct PIN must be rejected while throttled.");
+        }
+
+        [Test]
+        public void TruncatedCredentialsAreRejected()
+        {
+            HeliosPinAccessPolicy.CreateCredentials("2468", out string salt, out _);
+            string shortHash = Convert.ToBase64String(new byte[8]);
+
+            Assert.Throws<ArgumentException>(() =>
+                new HeliosPinAccessPolicy(salt, shortHash, TimeSpan.FromMinutes(1d)));
+        }
+
+        [Test]
         public void UnlockResumesChallengedOperation()
         {
             HeliosPinAccessPolicy.CreateCredentials("4321", out string salt, out string hash);

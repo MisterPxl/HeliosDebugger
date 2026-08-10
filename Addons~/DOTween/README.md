@@ -17,13 +17,13 @@ to compile without this addon.
 Git URL:
 
 ```text
-https://github.com/misterpxl/HeliosDebugger.git?path=/Addons~/DOTween#dotween-v1.1.1
+https://github.com/misterpxl/HeliosDebugger.git?path=/Addons~/DOTween#dotween-v1.1.2
 ```
 
 Manifest entry:
 
 ```json
-"com.misterpxl.helios-debugger.dotween": "https://github.com/misterpxl/HeliosDebugger.git?path=/Addons~/DOTween#dotween-v1.1.1"
+"com.misterpxl.helios-debugger.dotween": "https://github.com/misterpxl/HeliosDebugger.git?path=/Addons~/DOTween#dotween-v1.1.2"
 ```
 
 The addon lives under `Addons~` so it is never imported as content of the base

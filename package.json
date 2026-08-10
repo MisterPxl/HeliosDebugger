@@ -1,9 +1,10 @@
 {
   "name": "com.misterpxl.helios-debugger",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "displayName": "Helios Debugger",
   "description": "Standalone runtime debugger, console, profiler and bug-reporting tools for Unity.",
   "unity": "6000.0",
+  "license": "MIT",
   "dependencies": {
     "com.unity.inputsystem": "1.19.0",
     "com.unity.ugui": "2.0.0"

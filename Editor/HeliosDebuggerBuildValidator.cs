@@ -26,8 +26,12 @@ namespace HeliosDebugger.Editor
                 UnityEngine.Debug.LogWarning(message);
             }
 
-            if (!string.IsNullOrWhiteSpace(settings.WebhookUrl) && !settings.WebhookUrl.StartsWith("https://"))
-                throw new BuildFailedException("HeliosDebugger webhook URLs must use HTTPS.");
+            if (!string.IsNullOrWhiteSpace(settings.WebhookUrl) &&
+                !HeliosWebhookReportTransport.IsValidEndpoint(settings.WebhookUrl))
+            {
+                throw new BuildFailedException(
+                    "HeliosDebugger webhook URLs must use HTTPS (plain HTTP is only allowed for loopback addresses).");
+            }
 
             if (releaseBuild && settings.AllowInReleaseBuild && settings.RequirePin &&
                 (string.IsNullOrWhiteSpace(settings.PinSalt) || string.IsNullOrWhiteSpace(settings.PinHash)))

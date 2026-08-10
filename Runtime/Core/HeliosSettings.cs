@@ -123,6 +123,9 @@ namespace HeliosDebugger
         {
             _pinSalt = salt ?? string.Empty;
             _pinHash = hash ?? string.Empty;
+            // Saving credentials without requiring them silently disables the
+            // challenge; configuring a PIN implies it should be enforced.
+            _requirePin = !string.IsNullOrEmpty(_pinSalt) && !string.IsNullOrEmpty(_pinHash);
         }
 #endif
 

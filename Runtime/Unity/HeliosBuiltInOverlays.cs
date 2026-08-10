@@ -214,6 +214,8 @@ namespace HeliosDebugger
     public sealed class HeliosDockedProfilerOverlay : HeliosOverlayBase
     {
         private TextMeshProUGUI _text;
+        private HeliosProfilerSample _lastSample;
+        private float _nextRefreshTime;
 
         public override string Id => "helios.docked-profiler";
         public override int Order => 20;
@@ -241,9 +243,15 @@ namespace HeliosDebugger
 
         public override void Refresh()
         {
-            HeliosProfilerSample sample = Context.Service.Profiler.Latest;
-            if (_text == null || sample == null)
+            if (_text == null || Time.unscaledTime < _nextRefreshTime)
                 return;
+
+            HeliosProfilerSample sample = Context.Service.Profiler.Latest;
+            if (sample == null || ReferenceEquals(sample, _lastSample))
+                return;
+
+            _lastSample = sample;
+            _nextRefreshTime = Time.unscaledTime + Context.Service.Settings.ProfilerRefreshInterval;
             _text.text =
                 $"FPS {sample.Fps:F1}\nFrame {sample.FrameMs:F2} ms\n" +
                 $"Memory {HeliosWidgetFactory.FormatBytes(sample.UsedMemory)}\n" +

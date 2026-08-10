@@ -141,7 +141,9 @@ namespace HeliosDebugger
 
             if (!IsAvailable)
             {
-                Invoke(complete, HeliosReportResult.Fail("Webhook endpoint is not configured or is invalid."));
+                Invoke(complete, HeliosReportResult.Fail(
+                    "Webhook endpoint is not configured or is invalid. " +
+                    "Endpoints must use HTTPS (plain HTTP is only allowed for loopback addresses)."));
                 yield break;
             }
 
@@ -165,70 +167,85 @@ namespace HeliosDebugger
             }
 
             byte[] bodyBytes = Encoding.UTF8.GetBytes(body);
-            UnityWebRequest request;
+            UnityWebRequest request = null;
             UnityWebRequestAsyncOperation requestOperation;
             try
             {
                 request = new UnityWebRequest(_endpoint, UnityWebRequest.kHttpVerbPOST);
                 request.uploadHandler = new UploadHandlerRaw(bodyBytes);
-                request.downloadHandler = new DownloadHandlerBuffer();
+                // The response body is unused; leaving the download handler null
+                // discards it and avoids buffering arbitrarily large responses.
                 request.timeout = _timeoutSeconds;
                 request.SetRequestHeader("Content-Type", "application/json");
                 requestOperation = request.SendWebRequest();
             }
             catch (Exception exception)
             {
+                if (request != null)
+                    request.Dispose();
                 Invoke(
                     complete,
                     HeliosReportResult.Fail("Failed to start webhook request: " + exception.Message, exception));
                 yield break;
             }
 
-            while (!requestOperation.isDone)
+            HeliosReportResult result = null;
+            try
             {
-                if (operationContext.IsCancellationRequested)
+                while (!requestOperation.isDone)
                 {
-                    request.Abort();
-                    request.Dispose();
-                    Invoke(complete, HeliosReportResult.Cancelled());
-                    yield break;
+                    if (operationContext.IsCancellationRequested)
+                    {
+                        request.Abort();
+                        result = HeliosReportResult.Cancelled();
+                        break;
+                    }
+
+                    int progress = request.uploadProgress < 0f
+                        ? 0
+                        : (int)(request.uploadProgress * 100f);
+                    operationContext.Report(
+                        "submit.webhook",
+                        progress,
+                        100,
+                        "Uploading report bundle.");
+                    yield return null;
                 }
 
-                int progress = request.uploadProgress < 0f
-                    ? 0
-                    : (int)(request.uploadProgress * 100f);
-                operationContext.Report(
-                    "submit.webhook",
-                    progress,
-                    100,
-                    "Uploading report bundle.");
-                yield return null;
+                if (result == null)
+                {
+                    result = request.result == UnityWebRequest.Result.Success
+                        ? HeliosReportResult.Succeed("Report submitted to webhook.")
+                        : HeliosReportResult.Fail(
+                            "Webhook failed with HTTP " + request.responseCode + ": " +
+                            (request.error ?? "Unknown error."));
+                }
+            }
+            finally
+            {
+                request.Dispose();
             }
 
-            bool succeeded = request.result == UnityWebRequest.Result.Success;
-            string error = request.error;
-            long responseCode = request.responseCode;
-            request.Dispose();
-
-            if (succeeded)
-            {
+            if (result.Success)
                 operationContext.Report("submit.webhook", 100, 100, "Report bundle uploaded.");
-                Invoke(complete, HeliosReportResult.Succeed("Report submitted to webhook."));
-            }
-            else
-            {
-                Invoke(
-                    complete,
-                    HeliosReportResult.Fail(
-                        "Webhook failed with HTTP " + responseCode + ": " + (error ?? "Unknown error.")));
-            }
+            Invoke(complete, result);
         }
 
-        private static bool IsValidEndpoint(string endpoint)
+        /// <summary>
+        /// Shared endpoint validation used by the runtime transport and the
+        /// editor build validator. HTTPS is required; plain HTTP is only
+        /// tolerated for loopback endpoints used in local testing.
+        /// </summary>
+        public static bool IsValidEndpoint(string endpoint)
         {
             Uri uri;
-            return Uri.TryCreate(endpoint, UriKind.Absolute, out uri) &&
-                   (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+            if (!Uri.TryCreate(endpoint, UriKind.Absolute, out uri))
+                return false;
+
+            if (uri.Scheme == Uri.UriSchemeHttps)
+                return true;
+
+            return uri.Scheme == Uri.UriSchemeHttp && uri.IsLoopback;
         }
 
         private static void Invoke(Action<HeliosReportResult> complete, HeliosReportResult result)

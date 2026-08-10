@@ -414,8 +414,9 @@ namespace HeliosDebugger
 
         private void Trim()
         {
-            while (_history.Count > _capacity)
-                _history.RemoveAt(0);
+            int excess = _history.Count - _capacity;
+            if (excess > 0)
+                _history.RemoveRange(0, excess);
         }
     }
 }

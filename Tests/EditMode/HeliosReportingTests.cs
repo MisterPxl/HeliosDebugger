@@ -35,6 +35,18 @@ namespace HeliosDebugger.Tests
         }
 
         [Test]
+        public void WebhookEndpointRequiresHttpsExceptLoopback()
+        {
+            Assert.IsTrue(HeliosWebhookReportTransport.IsValidEndpoint("https://example.com/hook"));
+            Assert.IsTrue(HeliosWebhookReportTransport.IsValidEndpoint("http://127.0.0.1:8080/hook"));
+            Assert.IsTrue(HeliosWebhookReportTransport.IsValidEndpoint("http://localhost/hook"));
+            Assert.IsFalse(HeliosWebhookReportTransport.IsValidEndpoint("http://example.com/hook"));
+            Assert.IsFalse(HeliosWebhookReportTransport.IsValidEndpoint("ftp://example.com/hook"));
+            Assert.IsFalse(HeliosWebhookReportTransport.IsValidEndpoint("not a url"));
+            Assert.IsFalse(HeliosWebhookReportTransport.IsValidEndpoint(null));
+        }
+
+        [Test]
         public void RedactorPreservesLineAndRemovesSecretValue()
         {
             HeliosReportRedactor redactor = new HeliosReportRedactor();

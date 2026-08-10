@@ -154,19 +154,30 @@ namespace HeliosDebugger
 
             if (operationContext.IsCancellationRequested)
             {
+                CleanupMaterialized(materializedReport);
                 Invoke(complete, HeliosReportResult.Cancelled());
                 yield break;
             }
 
             operationContext.Report("submit.native-share", 0, 1, "Opening native share provider.");
             HeliosReportResult shareResult = null;
-            yield return provider.Share(
-                materializedReport,
-                operationContext,
-                delegate(HeliosReportResult result)
-                {
-                    shareResult = result;
-                });
+            try
+            {
+                yield return provider.Share(
+                    materializedReport,
+                    operationContext,
+                    delegate(HeliosReportResult result)
+                    {
+                        shareResult = result;
+                    });
+            }
+            finally
+            {
+                // Providers signal completion once the share sheet is dismissed
+                // and must consume the files before then; the temporary
+                // materialization is deleted on every outcome.
+                CleanupMaterialized(materializedReport);
+            }
 
             if (operationContext.IsCancellationRequested)
             {
@@ -184,6 +195,24 @@ namespace HeliosDebugger
                 operationContext.Report("submit.native-share", 1, 1, "Native share completed.");
 
             Invoke(complete, shareResult);
+        }
+
+        private static void CleanupMaterialized(HeliosMaterializedReport report)
+        {
+            if (report == null)
+                return;
+
+            try
+            {
+                if (System.IO.Directory.Exists(report.DirectoryPath))
+                    System.IO.Directory.Delete(report.DirectoryPath, true);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning(
+                    "Helios could not delete temporary share files at '" +
+                    report.DirectoryPath + "': " + exception.Message);
+            }
         }
 
         private static void Invoke(Action<HeliosReportResult> complete, HeliosReportResult result)

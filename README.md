@@ -16,7 +16,7 @@ It provides:
 Add the package to the project's `Packages/manifest.json`:
 
 ```json
-"com.misterpxl.helios-debugger": "https://github.com/misterpxl/HeliosDebugger.git#v2.2.0"
+"com.misterpxl.helios-debugger": "https://github.com/misterpxl/HeliosDebugger.git#v2.3.0"
 ```
 
 By default it bootstraps itself in the Editor and Development Builds only.
