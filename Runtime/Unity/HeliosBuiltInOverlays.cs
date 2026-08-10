@@ -154,9 +154,11 @@ namespace HeliosDebugger
 
     public sealed class HeliosDockedConsoleOverlay : HeliosOverlayBase
     {
+        private readonly HeliosLogFilter _filter = new HeliosLogFilter();
+        private readonly System.Text.StringBuilder _builder = new System.Text.StringBuilder(256);
         private HeliosLogQuery _query;
         private TextMeshProUGUI _text;
-        private int _lastCount = -1;
+        private int _lastRevision = -1;
 
         public override string Id => "helios.docked-console";
         public override int Order => 10;
@@ -191,21 +193,21 @@ namespace HeliosDebugger
 
         public override void Refresh()
         {
-            int count = Context.Service.Logs.Snapshot().Count;
-            if (_text == null || count == _lastCount)
+            int revision = Context.Service.Logs.Revision;
+            if (_text == null || revision == _lastRevision)
                 return;
 
-            IReadOnlyList<HeliosLogViewEntry> entries = _query.Execute(new HeliosLogFilter());
+            IReadOnlyList<HeliosLogViewEntry> entries = _query.Execute(_filter);
             int start = Mathf.Max(0, entries.Count - 4);
-            System.Text.StringBuilder builder = new System.Text.StringBuilder();
+            _builder.Length = 0;
             for (int i = start; i < entries.Count; i++)
             {
                 HeliosLogEntry entry = entries[i].Representative;
-                builder.Append('[').Append(entry.Level).Append("] ")
+                _builder.Append('[').Append(entry.Level).Append("] ")
                     .AppendLine(HeliosWidgetFactory.Truncate(entry.Message, 100));
             }
-            _text.text = builder.ToString();
-            _lastCount = count;
+            _text.text = _builder.ToString();
+            _lastRevision = revision;
         }
     }
 

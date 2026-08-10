@@ -17,14 +17,17 @@ to compile without this addon.
 Git URL:
 
 ```text
-https://github.com/misterpxl/HeliosDebugger.git?path=/Addons/DOTween#dotween-v1.1.0
+https://github.com/misterpxl/HeliosDebugger.git?path=/Addons~/DOTween#dotween-v1.1.1
 ```
 
 Manifest entry:
 
 ```json
-"com.misterpxl.helios-debugger.dotween": "https://github.com/misterpxl/HeliosDebugger.git?path=/Addons/DOTween#dotween-v1.1.0"
+"com.misterpxl.helios-debugger.dotween": "https://github.com/misterpxl/HeliosDebugger.git?path=/Addons~/DOTween#dotween-v1.1.1"
 ```
+
+The addon lives under `Addons~` so it is never imported as content of the base
+package; it is only available through this dedicated package URL.
 
 DOTween is intentionally not declared as a UPM dependency because DOTween Free
 is distributed and configured separately.

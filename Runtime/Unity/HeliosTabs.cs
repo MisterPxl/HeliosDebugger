@@ -20,6 +20,7 @@ namespace HeliosDebugger
         private TextMeshProUGUI _status;
         private bool _paused;
         private int _lastCount = -1;
+        private int _lastRevision = -1;
         private HeliosLogViewEntry _selected;
 
         public override string Title => "Console";
@@ -111,8 +112,8 @@ namespace HeliosDebugger
             if (_paused || _list == null || _query == null)
                 return;
 
-            int count = Context.Service.Logs.Snapshot().Count;
-            if (count != _lastCount)
+            int revision = Context.Service.Logs.Revision;
+            if (revision != _lastRevision)
                 RebuildList(true);
         }
 
@@ -124,7 +125,8 @@ namespace HeliosDebugger
             bool stickToBottom = preserveBottom && (_lastCount < 0 || _scroll.verticalNormalizedPosition <= 0.02f);
             IReadOnlyList<HeliosLogViewEntry> entries = _query.Execute(_filter);
             _list.SetEntries(entries, stickToBottom);
-            _lastCount = Context.Service.Logs.Snapshot().Count;
+            _lastCount = Context.Service.Logs.Count;
+            _lastRevision = Context.Service.Logs.Revision;
             if (_status != null)
                 _status.text = $"{entries.Count} visible / {_lastCount} captured";
         }

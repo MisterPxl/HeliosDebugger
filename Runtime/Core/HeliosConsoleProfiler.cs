@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using Unity.Profiling;
 using UnityEngine;
 
@@ -63,6 +64,7 @@ namespace HeliosDebugger
 
         private int _capacity;
         private int _sequence;
+        private int _revision;
         private bool _subscribed;
 
         public event Action Changed;
@@ -71,6 +73,32 @@ namespace HeliosDebugger
         {
             _capacity = Mathf.Max(32, capacity);
             Subscribe();
+        }
+
+        /// <summary>
+        /// Monotonic counter incremented whenever the visible entries change.
+        /// Allows consumers to detect changes without allocating a snapshot.
+        /// </summary>
+        public int Revision
+        {
+            get
+            {
+                lock (_gate)
+                {
+                    return _revision;
+                }
+            }
+        }
+
+        public int Count
+        {
+            get
+            {
+                lock (_gate)
+                {
+                    return _entries.Count;
+                }
+            }
         }
 
         public IReadOnlyList<HeliosLogEntry> Snapshot()
@@ -84,11 +112,17 @@ namespace HeliosDebugger
 
         public void SetCapacity(int capacity)
         {
+            bool changed;
             lock (_gate)
             {
                 _capacity = Mathf.Max(32, capacity);
-                TrimToCapacity();
+                changed = TrimToCapacity();
+                if (changed)
+                    _revision++;
             }
+
+            if (changed)
+                Changed?.Invoke();
         }
 
         public void Clear()
@@ -97,6 +131,7 @@ namespace HeliosDebugger
             {
                 _entries.Clear();
                 _pending.Clear();
+                _revision++;
             }
 
             Changed?.Invoke();
@@ -115,6 +150,9 @@ namespace HeliosDebugger
                 }
 
                 TrimToCapacity();
+
+                if (changed)
+                    _revision++;
             }
 
             if (changed)
@@ -170,7 +208,7 @@ namespace HeliosDebugger
         {
             HeliosLogLevel level = ConvertLevel(type);
             var entry = new HeliosLogEntry(
-                sequence: ++_sequence,
+                sequence: Interlocked.Increment(ref _sequence),
                 timestamp: DateTime.Now,
                 level: level,
                 message: condition,
@@ -182,10 +220,16 @@ namespace HeliosDebugger
             }
         }
 
-        private void TrimToCapacity()
+        private bool TrimToCapacity()
         {
+            bool removed = false;
             while (_entries.Count > _capacity)
+            {
                 _entries.Dequeue();
+                removed = true;
+            }
+
+            return removed;
         }
 
         private static HeliosLogLevel ConvertLevel(LogType type)
