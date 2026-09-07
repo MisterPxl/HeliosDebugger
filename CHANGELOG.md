@@ -8,6 +8,10 @@ and the package adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Declare the built-in image conversion, screen capture and Unity Web Request
+  modules required by reports, so minimal UPM consumers compile without relying
+  on a Unity template's implicit module selection.
+
 - Generate a Unity-discoverable `link.xml` for reflected options and remove the
   obsolete generated descriptor.
 - Close the debugger when access is locked, revoked, or expires, and check
