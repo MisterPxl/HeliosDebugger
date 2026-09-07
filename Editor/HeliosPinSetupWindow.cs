@@ -9,10 +9,10 @@ namespace HeliosDebugger.Editor
         [System.NonSerialized] private string _confirmation = string.Empty;
         [System.NonSerialized] private string _status = string.Empty;
 
-        [MenuItem("Tools/HeliosDebugger/Configure Access PIN")]
+        [MenuItem("Tools/Astra/Helios/Configure Access PIN")]
         public static void ShowWindow()
         {
-            HeliosPinSetupWindow window = GetWindow<HeliosPinSetupWindow>("Helios PIN");
+            HeliosPinSetupWindow window = GetWindow<HeliosPinSetupWindow>("Astra Helios — PIN");
             window.minSize = new Vector2(360f, 150f);
         }
 

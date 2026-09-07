@@ -164,7 +164,7 @@ namespace HeliosDebugger
             else if (!_fontWarningLogged)
             {
                 _fontWarningLogged = true;
-                Debug.LogWarning("HeliosDebugger could not resolve a TMP font asset. Import TMP Essential Resources from Tools > HeliosDebugger > Import TMP Essential Resources.");
+                Debug.LogWarning("HeliosDebugger could not resolve a TMP font asset. Import TMP Essential Resources from Tools > Astra > Helios > Import TMP Essential Resources.");
             }
             label.text = text;
             label.fontSize = fontSize > 0 ? fontSize : _theme.BaseFontSize;

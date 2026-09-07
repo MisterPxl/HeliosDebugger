@@ -1,4 +1,9 @@
-# HeliosDebugger
+# Astra Helios — Debugger
+
+Part of the **Astra** family. This package works independently of the Astra framework.
+
+The Astra menu labels described here are unreleased. Existing published tags keep
+their previous labels until the next release; package IDs and C# APIs are unchanged.
 
 HeliosDebugger is a standalone runtime debugger for Unity projects.
 
@@ -25,11 +30,11 @@ Helios uses TextMeshPro for the runtime UI. If TMP Essential Resources are not
 present, the editor imports them automatically from Unity's built-in `com.unity.ugui`
 package. You can also run the import manually with:
 
-`Tools > HeliosDebugger > Import TMP Essential Resources`
+`Tools > Astra > Helios > Import TMP Essential Resources`
 
 Create settings with:
 
-`Tools > HeliosDebugger > Create Settings Asset`
+`Tools > Astra > Helios > Create Settings Asset`
 
 The project-owned settings asset is stored at
 `Assets/Resources/HeliosDebuggerSettings.asset`.
@@ -128,7 +133,7 @@ The default policy is Development Build only. In production builds the runtime b
 For complete stripping, add `HELIOS_DEBUGGER_DISABLE` to the release build
 profile. The runtime and runtime-dependent editor assemblies use this as an
 assembly constraint, so their code is not compiled into that target. The
-Compilation menu under `Tools > HeliosDebugger` manages the symbol for the
+Compilation menu under `Tools > Astra > Helios` manages the symbol for the
 selected target.
 
 ## Runtime Presentation
@@ -137,7 +142,7 @@ The settings asset controls the default tab, remembered tab, trigger corner,
 gesture, panel opacity, diagnostic overlays, Escape-to-close behavior, and
 screen-space/world-space canvas mode. A project-owned theme can be created with:
 
-`Tools > HeliosDebugger > Create Theme Asset`
+`Tools > Astra > Helios > Create Theme Asset`
 
 The default runtime presentation is a dark dev-tool style UI using the bundled
 Inter font and Lucide icon set. Both assets live under
@@ -185,7 +190,7 @@ Helios.SetAccessPolicy(myAccessPolicy);
 ```
 
 The built-in PIN policy is enabled from the settings asset. Configure its
-salted PBKDF2 hash with `Tools > HeliosDebugger > Configure Access PIN`; the
+salted PBKDF2 hash with `Tools > Astra > Helios > Configure Access PIN`; the
 plaintext PIN is never serialized.
 
 Locking access or expiring the session closes an open debugger. Custom option
@@ -213,3 +218,22 @@ Add these scripting defines when needed:
 
 - `HELIOS_DEBUGGER_DISABLE` disables the runtime code path.
 - `HELIOS_DEBUGGER_DISABLE_AUTO_BOOT` keeps the API available but prevents automatic bootstrap.
+
+## Astra conventions
+
+See [Astra conventions](Documentation~/AstraConventions.md) for product identity,
+menu paths, terminology and the staged API migration policy.
+
+Menu migration: `Tools > HeliosDebugger` is now `Tools > Astra > Helios`.
+
+## Tests
+
+Add `com.misterpxl.helios-debugger` to the consumer manifest’s `testables` and run
+its EditMode and PlayMode suites. Include optional integrations when testing them.
+
+## Removal
+
+Remove dependent integrations and project references to Helios APIs/annotations
+before removing the base package. Review project-owned settings and generated
+catalogs separately. To keep the annotations while excluding the runtime from
+Release builds, use `HELIOS_DEBUGGER_DISABLE` as described above.

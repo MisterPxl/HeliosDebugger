@@ -62,7 +62,7 @@ namespace HeliosDebugger.Editor
 
     public static class HeliosDebuggerEditorMenu
     {
-        [MenuItem("Tools/HeliosDebugger/Create Settings Asset")]
+        [MenuItem("Tools/Astra/Helios/Create Settings Asset")]
         public static void CreateSettingsAsset()
         {
             const string resourcesPath = "Assets/Resources";
@@ -84,7 +84,7 @@ namespace HeliosDebugger.Editor
             Selection.activeObject = settings;
         }
 
-        [MenuItem("Tools/HeliosDebugger/Validate Setup")]
+        [MenuItem("Tools/Astra/Helios/Validate Setup")]
         public static void ValidateSetup()
         {
             if (!HeliosTextMeshProResources.HasEssentialResources)
@@ -99,7 +99,7 @@ namespace HeliosDebugger.Editor
                 $"DevelopmentOnly={settings.DevelopmentBuildOnly}, LogCapacity={settings.LogCapacity}.");
         }
 
-        [MenuItem("Tools/HeliosDebugger/Create Theme Asset")]
+        [MenuItem("Tools/Astra/Helios/Create Theme Asset")]
         public static void CreateThemeAsset()
         {
             const string assetPath = "Assets/HeliosDebuggerTheme.asset";

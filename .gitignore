@@ -41,3 +41,7 @@
 /test-results-*.xml.meta
 /UnityProject~/Assets/InitTestScene*.unity
 /UnityProject~/Assets/InitTestScene*.unity.meta
+
+# Package documentation is shipped with Astra releases.
+!/Documentation~/
+!/Documentation~/**

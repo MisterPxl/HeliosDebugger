@@ -10,19 +10,19 @@ namespace HeliosDebugger.Editor
     {
         private const string DisableDefine = "HELIOS_DEBUGGER_DISABLE";
 
-        [MenuItem("Tools/HeliosDebugger/Compilation/Enable Runtime (All Targets)")]
+        [MenuItem("Tools/Astra/Helios/Compilation/Enable Runtime (All Targets)")]
         public static void EnableRuntime()
         {
             SetDisabled(false);
         }
 
-        [MenuItem("Tools/HeliosDebugger/Compilation/Disable Runtime (All Targets)")]
+        [MenuItem("Tools/Astra/Helios/Compilation/Disable Runtime (All Targets)")]
         public static void DisableRuntime()
         {
             SetDisabled(true);
         }
 
-        [MenuItem("Tools/HeliosDebugger/Compilation/Enable Runtime (All Targets)", true)]
+        [MenuItem("Tools/Astra/Helios/Compilation/Enable Runtime (All Targets)", true)]
         private static bool ValidateEnableRuntime()
         {
             foreach (NamedBuildTarget target in EnumerateTargets())
@@ -33,7 +33,7 @@ namespace HeliosDebugger.Editor
             return false;
         }
 
-        [MenuItem("Tools/HeliosDebugger/Compilation/Disable Runtime (All Targets)", true)]
+        [MenuItem("Tools/Astra/Helios/Compilation/Disable Runtime (All Targets)", true)]
         private static bool ValidateDisableRuntime()
         {
             foreach (NamedBuildTarget target in EnumerateTargets())

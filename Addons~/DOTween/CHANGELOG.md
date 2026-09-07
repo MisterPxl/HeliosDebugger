@@ -2,6 +2,12 @@
 
 All notable changes to the Helios Debugger DOTween addon are documented here.
 
+## [Unreleased]
+
+### Changed
+
+- Adopt Astra display names, menus, integration terminology and shared documentation conventions. Package IDs and C# APIs remain unchanged.
+
 ## [1.1.3] - 2026-08-10
 
 ### Changed

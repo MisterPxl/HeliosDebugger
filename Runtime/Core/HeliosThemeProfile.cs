@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace HeliosDebugger
 {
-    [CreateAssetMenu(fileName = "HeliosDebuggerTheme", menuName = "HeliosDebugger/Theme")]
+    [CreateAssetMenu(fileName = "HeliosDebuggerTheme", menuName = "Astra/Helios/Theme")]
     public sealed class HeliosThemeProfile : ScriptableObject
     {
         [Header("Surfaces")]

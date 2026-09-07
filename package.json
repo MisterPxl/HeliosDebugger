@@ -1,7 +1,7 @@
 {
   "name": "com.misterpxl.helios-debugger",
   "version": "2.3.1",
-  "displayName": "Helios Debugger",
+  "displayName": "Astra Helios — Debugger",
   "description": "Standalone runtime debugger, console, profiler and bug-reporting tools for Unity.",
   "unity": "6000.0",
   "license": "MIT",
@@ -21,5 +21,8 @@
   ],
   "author": {
     "name": "Alexis Gomes"
-  }
+  },
+  "documentationUrl": "https://github.com/MisterPxl/HeliosDebugger/blob/main/README.md",
+  "changelogUrl": "https://github.com/MisterPxl/HeliosDebugger/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/MisterPxl/HeliosDebugger/blob/main/LICENSE.md"
 }

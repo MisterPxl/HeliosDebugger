@@ -1,7 +1,7 @@
 {
   "name": "com.misterpxl.helios-debugger.dotween",
   "version": "1.1.3",
-  "displayName": "Helios Debugger - DOTween",
+  "displayName": "Astra Helios — DOTween Integration",
   "description": "Optional Helios Debugger runtime tab for inspecting and controlling DOTween Free tweens.",
   "unity": "6000.0",
   "license": "MIT",
@@ -18,5 +18,8 @@
   ],
   "author": {
     "name": "Alexis Gomes"
-  }
+  },
+  "documentationUrl": "https://github.com/MisterPxl/HeliosDebugger/blob/main/Addons~/DOTween/README.md",
+  "changelogUrl": "https://github.com/MisterPxl/HeliosDebugger/blob/main/Addons~/DOTween/CHANGELOG.md",
+  "licensesUrl": "https://github.com/MisterPxl/HeliosDebugger/blob/main/Addons~/DOTween/LICENSE.md"
 }

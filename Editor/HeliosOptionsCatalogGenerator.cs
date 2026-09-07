@@ -17,7 +17,7 @@ namespace HeliosDebugger.Editor
         private const string LinkPath = DirectoryPath + "/link.xml";
         private const string LegacyLinkPath = DirectoryPath + "/HeliosGeneratedOptions.link.xml";
 
-        [MenuItem("Tools/HeliosDebugger/Regenerate Options Catalog")]
+        [MenuItem("Tools/Astra/Helios/Regenerate Options Catalog")]
         public static void Generate()
         {
             IReadOnlyList<Type> types = CollectTypes();

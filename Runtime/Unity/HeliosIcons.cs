@@ -9,7 +9,7 @@ namespace HeliosDebugger
         Sprite Icon { get; }
     }
 
-    [CreateAssetMenu(fileName = "HeliosIconSet", menuName = "HeliosDebugger/Icon Set")]
+    [CreateAssetMenu(fileName = "HeliosIconSet", menuName = "Astra/Helios/Icon Set")]
     public sealed class HeliosIconSet : ScriptableObject
     {
         [SerializeField] private List<Entry> _entries = new List<Entry>();

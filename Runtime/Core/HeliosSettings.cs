@@ -26,7 +26,7 @@ namespace HeliosDebugger
         WorldSpace
     }
 
-    [CreateAssetMenu(fileName = "HeliosDebuggerSettings", menuName = "HeliosDebugger/Settings")]
+    [CreateAssetMenu(fileName = "HeliosDebuggerSettings", menuName = "Astra/Helios/Settings")]
     public sealed class HeliosDebuggerSettings : ScriptableObject
     {
         [Header("Availability")]

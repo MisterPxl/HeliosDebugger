@@ -6,6 +6,10 @@ and the package adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Adopt Astra display names, menus, integration terminology and shared documentation conventions. Package IDs and C# APIs remain unchanged.
+
 ### Fixed
 
 - Declare the built-in image conversion, screen capture and Unity Web Request

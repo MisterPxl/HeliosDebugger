@@ -1,8 +1,12 @@
-# Helios Debugger - DOTween
+# Astra Helios — DOTween Integration
+
+An optional **Astra integration**. Install its prerequisites explicitly; the base
+packages remain usable independently. Astra labels in this working copy will ship
+with the next release; existing published tags retain their earlier labels.
 
 Optional runtime `Tweens` tab for DOTween Free. The base
 `com.misterpxl.helios-debugger` package has no DOTween dependency and continues
-to compile without this addon.
+to compile without this integration.
 
 ## Requirements
 
@@ -10,9 +14,9 @@ to compile without this addon.
 2. Open `Tools > Demigiant > DOTween Utility Panel`.
 3. Run setup. The standard DOTween Free import exposes `DOTween.dll`; generating
    asmdefs may additionally create `DOTween.Modules`.
-4. Verify setup supplied the `DOTWEEN` scripting define used to keep the addon
+4. Verify setup supplied the `DOTWEEN` scripting define used to keep the integration
    assembly excluded when DOTween is absent.
-5. Install Helios Debugger and this addon.
+5. Install Helios Debugger and this integration.
 
 Git URL:
 
@@ -26,7 +30,7 @@ Manifest entry:
 "com.misterpxl.helios-debugger.dotween": "https://github.com/misterpxl/HeliosDebugger.git?path=/Addons~/DOTween#dotween-v1.1.3"
 ```
 
-The addon lives under `Addons~` so it is never imported as content of the base
+The integration lives under `Addons~` so it is never imported as content of the base
 package; it is only available through this dedicated package URL.
 
 DOTween is intentionally not declared as a UPM dependency because DOTween Free
@@ -34,14 +38,14 @@ is distributed and configured separately.
 
 ## Runtime behavior
 
-The addon registers a deferred `IHeliosTabProvider` before the first scene. It
+The integration registers a deferred `IHeliosTabProvider` before the first scene. It
 does not initialize Helios. The tab appears only if Helios itself passes its
 bootstrap policy and creates a root, or if the application initializes Helios
 explicitly.
 
 Helios defaults to Editor and Development Builds. `HELIOS_DEBUGGER_DISABLE`
 removes the runtime assemblies; `HELIOS_DEBUGGER_DISABLE_AUTO_BOOT` keeps the
-API available but prevents automatic UI creation. The addon does not bypass
+API available but prevents automatic UI creation. The integration does not bypass
 either policy.
 
 The tab provides:
@@ -72,3 +76,22 @@ instance from receiving a command intended for its previous generation.
 Import `DOTween Monitoring` from Package Manager. Add
 `HeliosDOTweenSample` to a GameObject to create looping playing and paused
 tweens with IDs and targets.
+
+## Prerequisites and tests
+
+The manifest declares these package versions:
+
+- `com.misterpxl.helios-debugger`: `2.2.0`.
+- `com.unity.ugui`: `2.0.0`.
+
+Install the Astra base packages explicitly in the consumer manifest, using the
+Git URLs from their READMEs. Git packages are not fetched transitively from
+version-only dependencies. Unity registry dependencies resolve normally.
+
+Add `com.misterpxl.helios-debugger.dotween` to the consumer manifest’s `testables` and run
+its suites in Unity Test Runner. Keep DOTween installed while running these tests.
+
+## Removal
+
+Remove project components, assets or code that reference this integration before
+removing it through Package Manager. The base packages can remain installed.

@@ -45,7 +45,7 @@ namespace HeliosDebugger.Editor
         public static string MissingResourcesMessage =>
             "HeliosDebugger uses TextMeshPro. TMP Essential Resources must be imported before building or running the visual debugger.";
 
-        [MenuItem("Tools/HeliosDebugger/Import TMP Essential Resources")]
+        [MenuItem("Tools/Astra/Helios/Import TMP Essential Resources")]
         public static void ImportEssentialResources()
         {
             if (HasEssentialResources)

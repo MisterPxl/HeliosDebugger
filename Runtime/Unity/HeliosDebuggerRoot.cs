@@ -206,7 +206,7 @@ namespace HeliosDebugger
             HeliosWidgetFactory.Anchor(logoRect, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(18f, -16f), new Vector2(50f, 16f));
             _widgets.AddIcon(logo.transform, HeliosIcons.Get(HeliosIcons.Console), _widgets.Theme.Accent, 18f);
 
-            TextMeshProUGUI title = _widgets.CreateText("Title", header.transform, "Helios Debugger", _widgets.Theme.TitleFontSize, TextAnchor.MiddleLeft);
+            TextMeshProUGUI title = _widgets.CreateText("Title", header.transform, "Astra Helios", _widgets.Theme.TitleFontSize, TextAnchor.MiddleLeft);
             title.fontStyle = FontStyles.Bold;
             HeliosWidgetFactory.Stretch(title.rectTransform, 60f, 0f, 90f, 0f);
             Button close = _widgets.CreateIconButton("Close", header.transform, HeliosIcons.Get("x"), () => _service.Hide());
