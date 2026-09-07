@@ -5,6 +5,46 @@ namespace HeliosDebugger.Tests
 {
     public sealed class HeliosAccessTests
     {
+        [TestCase("lock")]
+        [TestCase("expire")]
+        [TestCase("replace")]
+        public void RevokedAccessClosesVisibleDebugger(string reason)
+        {
+            var service = HeliosService.CreateDefault();
+            try
+            {
+                var policy = new MutablePolicy();
+                service.Access.SetPolicy(policy);
+                service.Show();
+                Assert.IsTrue(service.TryUnlock("test"));
+                Assert.IsTrue(service.IsVisible);
+                Assert.IsTrue(service.CanInteractWithDebugger);
+
+                if (reason == "lock")
+                    service.Access.Lock();
+                else if (reason == "replace")
+                    service.Access.SetPolicy(new HeliosDenyAllAccessPolicy());
+                else
+                    policy.Lock(); // Simulates expiry without a policy change notification.
+
+                Assert.IsFalse(service.CanInteractWithDebugger);
+                if (reason != "expire")
+                    Assert.IsFalse(service.IsVisible, "Explicit revocation must close immediately.");
+                service.Tick(0.01f);
+                Assert.IsFalse(service.IsVisible);
+            }
+            finally { service.Dispose(); }
+        }
+
+        private sealed class MutablePolicy : IHeliosChallengeAccessPolicy
+        {
+            private bool _unlocked;
+            public HeliosAccessDecision Evaluate(HeliosAccessRequest request) =>
+                _unlocked ? HeliosAccessDecision.Allow : HeliosAccessDecision.Challenge;
+            public bool TryUnlock(string credential) { _unlocked = true; return true; }
+            public void Lock() { _unlocked = false; }
+        }
+
         [Test]
         public void PinPolicyUnlocksWithConfiguredPin()
         {

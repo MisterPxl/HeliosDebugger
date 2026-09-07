@@ -4,6 +4,21 @@ All notable changes to the Helios Debugger package are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the package adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- Generate a Unity-discoverable `link.xml` for reflected options and remove the
+  obsolete generated descriptor.
+- Close the debugger when access is locked, revoked, or expires, and check
+  authorization before built-in option edits and actions.
+- Bound pending logs as well as stored logs, including after capacity changes.
+- Preserve focused numeric input until editing is committed.
+- Invalidate reports when their description changes, cancel obsolete operations,
+  and retain the description when switching tabs.
+- Isolate reflected getter failures, display unavailable values, and allow
+  recovery without preventing other options from working.
+
 ## [2.3.1] - 2026-08-10
 
 ### Added

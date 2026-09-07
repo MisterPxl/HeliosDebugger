@@ -188,6 +188,16 @@ The built-in PIN policy is enabled from the settings asset. Configure its
 salted PBKDF2 hash with `Tools > HeliosDebugger > Configure Access PIN`; the
 plaintext PIN is never serialized.
 
+Locking access or expiring the session closes an open debugger. Custom option
+controls should check `HeliosOptionControlContext.CanEdit` immediately before
+changing a value; custom tab callbacks can check
+`HeliosService.CanInteractWithDebugger`.
+
+Reflected options whose getters throw display `<unavailable>` and are retried on
+subsequent reads. `HeliosOptionMember.GetValue()` returns `null` for an unavailable
+getter; use `TryGetValue(out object value)` when a legitimate `null` must be
+distinguished from a failed read.
+
 ## Version 2 Migration
 
 Version 2 removes `HeliosReportTransportKind` and the path-based

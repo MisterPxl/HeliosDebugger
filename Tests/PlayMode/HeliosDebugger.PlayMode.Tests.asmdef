@@ -3,6 +3,7 @@
     "rootNamespace": "HeliosDebugger.Tests",
     "references": [
         "HeliosDebugger.Runtime",
+        "Unity.TextMeshPro",
         "HeliosDebugger.Annotations",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"

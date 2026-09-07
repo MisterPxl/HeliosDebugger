@@ -9,19 +9,32 @@ namespace HeliosDebugger
     public sealed class HeliosOptionControlContext
     {
         private readonly Action<Action> _registerRefresh;
+        private readonly Func<bool> _canEdit;
 
         public HeliosOptionControlContext(
             HeliosWidgetFactory widgets,
             Transform parent,
             Action<Action> registerRefresh)
+            : this(widgets, parent, registerRefresh, null)
+        {
+        }
+
+        public HeliosOptionControlContext(
+            HeliosWidgetFactory widgets,
+            Transform parent,
+            Action<Action> registerRefresh,
+            Func<bool> canEdit)
         {
             Widgets = widgets;
             Parent = parent;
             _registerRefresh = registerRefresh;
+            _canEdit = canEdit;
         }
 
         public HeliosWidgetFactory Widgets { get; }
         public Transform Parent { get; }
+        /// <summary>Custom controls should check this immediately before changing an option.</summary>
+        public bool CanEdit => _canEdit == null || _canEdit();
 
         public void RegisterRefresh(Action refresh)
         {
@@ -75,6 +88,8 @@ namespace HeliosDebugger
             HeliosSwitchControl control = context.Widgets.CreateSwitch("Toggle", context.Parent, isOn, option.GetDisplayValue(), null);
             control.Button.onClick.AddListener(() =>
             {
+                if (!context.CanEdit)
+                    return;
                 option.ToggleBoolean();
                 control.SetValue(option.GetValue() is bool current && current, option.GetDisplayValue());
             });
@@ -93,6 +108,8 @@ namespace HeliosDebugger
             TextMeshProUGUI label = HeliosWidgetFactory.GetButtonLabel(button);
             button.onClick.AddListener(() =>
             {
+                if (!context.CanEdit)
+                    return;
                 option.CycleEnum();
                 label.text = option.GetDisplayValue();
             });
@@ -116,21 +133,35 @@ namespace HeliosDebugger
 
         public void Build(HeliosOptionControlContext context, IHeliosValueOption option)
         {
-            Button minus = context.Widgets.CreateButton("Minus", context.Parent, "-", () => option.Adjust(-1f));
+            Button minus = context.Widgets.CreateButton("Minus", context.Parent, "-", () =>
+            {
+                if (context.CanEdit)
+                    option.Adjust(-1f);
+            });
             context.Widgets.AddLayout(minus.gameObject, 32f);
             minus.GetComponent<LayoutElement>().preferredWidth = 36f;
             TMP_InputField value = context.Widgets.CreateInput("Value", context.Parent, option.GetDisplayValue(), null);
             value.text = option.GetDisplayValue();
             value.onEndEdit.AddListener(text =>
             {
+                if (!context.CanEdit)
+                    return;
                 option.TrySetFromString(text);
                 value.text = option.GetDisplayValue();
             });
             context.Widgets.AddLayout(value.gameObject, -1f, 32f);
-            Button plus = context.Widgets.CreateButton("Plus", context.Parent, "+", () => option.Adjust(1f));
+            Button plus = context.Widgets.CreateButton("Plus", context.Parent, "+", () =>
+            {
+                if (context.CanEdit)
+                    option.Adjust(1f);
+            });
             context.Widgets.AddLayout(plus.gameObject, 32f);
             plus.GetComponent<LayoutElement>().preferredWidth = 36f;
-            context.RegisterRefresh(() => value.text = option.GetDisplayValue());
+            context.RegisterRefresh(() =>
+            {
+                if (!value.isFocused)
+                    value.text = option.GetDisplayValue();
+            });
         }
     }
 
@@ -145,6 +176,8 @@ namespace HeliosDebugger
             input.text = option.GetDisplayValue();
             input.onEndEdit.AddListener(text =>
             {
+                if (!context.CanEdit)
+                    return;
                 option.TrySetFromString(text);
                 input.text = option.GetDisplayValue();
             });
@@ -172,7 +205,8 @@ namespace HeliosDebugger
             Image swatch = null;
             if (option.ValueType == typeof(Color))
             {
-                GameObject swatchObject = context.Widgets.CreatePanel("Swatch", context.Parent, (Color)option.GetValue());
+                GameObject swatchObject = context.Widgets.CreatePanel("Swatch", context.Parent,
+                    option.GetValue() is Color color ? color : Color.clear);
                 swatch = swatchObject.GetComponent<Image>();
                 context.Widgets.AddLayout(swatchObject, 32f, 32f);
                 swatchObject.GetComponent<LayoutElement>().preferredWidth = 32f;
@@ -182,6 +216,8 @@ namespace HeliosDebugger
             input.text = option.GetDisplayValue();
             input.onEndEdit.AddListener(text =>
             {
+                if (!context.CanEdit)
+                    return;
                 option.TrySetFromString(text);
                 Refresh(input, swatch, option);
             });
@@ -194,7 +230,7 @@ namespace HeliosDebugger
             if (!input.isFocused)
                 input.text = option.GetDisplayValue();
             if (swatch != null)
-                swatch.color = (Color)option.GetValue();
+                swatch.color = option.GetValue() is Color color ? color : Color.clear;
         }
     }
 

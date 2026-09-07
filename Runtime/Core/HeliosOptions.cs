@@ -216,7 +216,7 @@ namespace HeliosDebugger
 
         private void ScanStaticType(Type type, HashSet<Type> scannedTypes)
         {
-            if (type == null || !scannedTypes.Add(type))
+            if (type == null || type.ContainsGenericParameters || !scannedTypes.Add(type))
                 return;
 
             HeliosOptionsAttribute optionsAttribute = type.GetCustomAttribute<HeliosOptionsAttribute>();
@@ -247,6 +247,8 @@ namespace HeliosDebugger
             for (int i = 0; i < properties.Length; i++)
             {
                 PropertyInfo property = properties[i];
+                if (property.GetIndexParameters().Length != 0)
+                    continue;
                 HeliosOptionAttribute attribute = property.GetCustomAttribute<HeliosOptionAttribute>();
                 if (attribute == null)
                     continue;
@@ -504,7 +506,8 @@ namespace HeliosDebugger
         private readonly object _target;
         private readonly FieldInfo _field;
         private readonly PropertyInfo _property;
-        private readonly object _initialValue;
+        private object _initialValue;
+        private bool _hasInitialValue;
 
         private HeliosOptionMember(
             Type declaringType,
@@ -532,7 +535,7 @@ namespace HeliosDebugger
                 ? field.GetCustomAttribute<HeliosRangeAttribute>()
                 : property.GetCustomAttribute<HeliosRangeAttribute>();
             IsReadOnly = attribute.ReadOnly || (property != null && property.GetSetMethod(true) == null);
-            _initialValue = GetValue();
+            TryGetValue(out _);
         }
 
         public Type DeclaringType { get; }
@@ -562,14 +565,40 @@ namespace HeliosDebugger
             return new HeliosOptionMember(declaringType, target, null, property, attribute, typeAttribute);
         }
 
+        /// <summary>
+        /// Returns null when a reflected getter is unavailable. Use TryGetValue
+        /// to distinguish an unavailable getter from a legitimate null value.
+        /// </summary>
         public object GetValue()
         {
-            return _field != null ? _field.GetValue(_target) : _property.GetValue(_target, null);
+            return TryGetValue(out object value) ? value : null;
+        }
+
+        /// <summary>Reads an option without letting a failing getter interrupt other options.</summary>
+        public bool TryGetValue(out object value)
+        {
+            try
+            {
+                value = _field != null ? _field.GetValue(_target) : _property.GetValue(_target, null);
+                if (!_hasInitialValue)
+                {
+                    _initialValue = value;
+                    _hasInitialValue = true;
+                }
+                return true;
+            }
+            catch (Exception)
+            {
+                value = null;
+                return false;
+            }
         }
 
         public string GetDisplayValue()
         {
-            return HeliosOptionValueConverter.Format(GetValue(), ValueType);
+            return TryGetValue(out object value)
+                ? HeliosOptionValueConverter.Format(value, ValueType)
+                : "<unavailable>";
         }
 
         public bool TrySetFromString(string text)
@@ -593,7 +622,7 @@ namespace HeliosDebugger
 
         public void Reset()
         {
-            if (IsReadOnly)
+            if (IsReadOnly || (!_hasInitialValue && !TryGetValue(out _)))
                 return;
 
             SetValue(_initialValue);
@@ -605,7 +634,8 @@ namespace HeliosDebugger
             if (IsReadOnly)
                 return;
 
-            object value = GetValue();
+            if (!TryGetValue(out object value))
+                return;
             float step = Range != null ? Range.Step : 1f;
             if (ValueKind == HeliosOptionValueKind.Integer)
             {
@@ -634,9 +664,9 @@ namespace HeliosDebugger
 
         public void ToggleBoolean()
         {
-            if (!IsReadOnly && ValueKind == HeliosOptionValueKind.Boolean)
+            if (!IsReadOnly && ValueKind == HeliosOptionValueKind.Boolean && TryGetValue(out object value))
             {
-                SetValue(!(bool)GetValue());
+                SetValue(!(bool)value);
                 PersistIfNeeded();
             }
         }
@@ -650,7 +680,8 @@ namespace HeliosDebugger
             if (values.Length == 0)
                 return;
 
-            object current = GetValue();
+            if (!TryGetValue(out object current))
+                return;
             int index = Array.IndexOf(values, current);
             object next = values.GetValue((index + 1) % values.Length);
             SetValue(next);
@@ -667,10 +698,10 @@ namespace HeliosDebugger
 
         private void PersistIfNeeded()
         {
-            if (!Persist)
+            if (!Persist || !TryGetValue(out object value))
                 return;
 
-            PlayerPrefs.SetString(PersistenceKey, GetDisplayValue());
+            PlayerPrefs.SetString(PersistenceKey, HeliosOptionValueConverter.Format(value, ValueType));
             HeliosPersistence.MarkDirty();
         }
 

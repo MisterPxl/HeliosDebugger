@@ -599,13 +599,16 @@ namespace HeliosDebugger
             HeliosOptionControlContext controlContext = new HeliosOptionControlContext(
                 Widgets,
                 row.transform,
-                refresh => _refreshBindings.Add(refresh));
+                refresh => _refreshBindings.Add(refresh),
+                () => Context.Service.CanInteractWithDebugger);
             builder.Build(controlContext, option);
 
             if (!option.IsReadOnly)
             {
                 Widgets.CreateButton("Reset", row.transform, "Reset", () =>
                 {
+                    if (!Context.Service.CanInteractWithDebugger)
+                        return;
                     option.Reset();
                     RefreshOptionValues();
                 });
@@ -640,6 +643,8 @@ namespace HeliosDebugger
                     : $"{action.DisplayName}\n{action.Description}";
                 Button button = Widgets.CreateButton($"Action_{action.DisplayName}", _content, label, () =>
                 {
+                    if (!Context.Service.CanInteractWithDebugger)
+                        return;
                     HeliosActionResult result = action.Invoke();
                     if (!result.Success)
                         UnityEngine.Debug.LogWarning($"Helios action failed: {result.Message}");
@@ -678,6 +683,8 @@ namespace HeliosDebugger
 
             Button run = Widgets.CreateButton("Run", card.transform, "Run", () =>
             {
+                if (!Context.Service.CanInteractWithDebugger)
+                    return;
                 List<string> values = new List<string>(valueReaders.Count);
                 for (int i = 0; i < valueReaders.Count; i++)
                     values.Add(valueReaders[i]());
@@ -974,6 +981,14 @@ namespace HeliosDebugger
             if (!_accessGranted || _info == null || Time.unscaledTime - _lastRefresh < 1f)
                 return;
 
+            if (Context.Service.Access.Policy.Evaluate(
+                    new HeliosAccessRequest(HeliosAccessOperation.ViewSensitiveSystemInfo, "system")) != HeliosAccessDecision.Allow)
+            {
+                _accessGranted = false;
+                _info.text = "Access required.";
+                return;
+            }
+
             _lastRefresh = Time.unscaledTime;
             _info.text = Context.Service.SystemInfo.ExportText();
         }
@@ -985,6 +1000,7 @@ namespace HeliosDebugger
         private TextMeshProUGUI _status;
         private HeliosReportBundle _lastReport;
         private HeliosReportCancellationSource _cancellation;
+        private string _descriptionText = string.Empty;
 
         public override string Title => "Bug Reporter";
         public override int Order => 40;
@@ -992,7 +1008,8 @@ namespace HeliosDebugger
 
         protected override void BuildContent(HeliosWidgetFactory widgets, Transform parent)
         {
-            _description = widgets.CreateInput("Description", parent, "Describe the issue, reproduction steps, expected result...", null);
+            _description = widgets.CreateInput("Description", parent, "Describe the issue, reproduction steps, expected result...", OnDescriptionChanged);
+            _description.SetTextWithoutNotify(_descriptionText);
             _description.lineType = TMP_InputField.LineType.MultiLineNewline;
             widgets.AddLayout(_description.gameObject, 160f);
 
@@ -1026,17 +1043,52 @@ namespace HeliosDebugger
                 BuildReportAllowed);
         }
 
+        private void OnDescriptionChanged(string description)
+        {
+            _descriptionText = description;
+            _lastReport = null;
+            _cancellation?.Cancel();
+            _cancellation = null;
+            if (_status != null)
+                _status.text = "Description changed. Build a new report.";
+        }
+
+        private HeliosReportCancellationSource BeginOperation()
+        {
+            _cancellation?.Cancel();
+            _cancellation = new HeliosReportCancellationSource();
+            return _cancellation;
+        }
+
+        private bool IsCurrentOperation(HeliosReportCancellationSource operation)
+        {
+            return ReferenceEquals(_cancellation, operation) && !operation.IsCancellationRequested;
+        }
+
+        private HeliosReportOperationContext CreateOperationContext(HeliosReportCancellationSource operation)
+        {
+            return operation.CreateContext(progress =>
+            {
+                if (IsCurrentOperation(operation))
+                    OnProgress(progress);
+            });
+        }
+
         private void BuildReportAllowed()
         {
             if (_status == null || _description == null)
                 return;
-            _cancellation = new HeliosReportCancellationSource();
+            HeliosReportCancellationSource operation = BeginOperation();
             _status.text = "Building report...";
             Context.Root.Run(Context.Service.Reporting.BuildReport(
                 _description.text,
                 Context.Service.Settings.MaxReportBytes,
-                _cancellation.CreateContext(OnProgress),
-                OnReportBuilt));
+                CreateOperationContext(operation),
+                (report, result) =>
+                {
+                    if (IsCurrentOperation(operation))
+                        OnReportBuilt(report, result);
+                }));
         }
 
         private void Submit(HeliosTransportId id)
@@ -1065,31 +1117,36 @@ namespace HeliosDebugger
                 return;
             }
 
-            _cancellation = new HeliosReportCancellationSource();
+            HeliosReportCancellationSource operation = BeginOperation();
             _status.text = $"Submitting via {transport.DisplayName}...";
             Context.Root.Run(Context.Service.Reporting.Submit(
                 id,
                 _lastReport,
-                _cancellation.CreateContext(OnProgress),
-                OnReportSubmitted));
+                CreateOperationContext(operation),
+                result =>
+                {
+                    if (IsCurrentOperation(operation))
+                        OnReportSubmitted(result);
+                }));
         }
 
         private void BuildAndSubmit(HeliosTransportId id)
         {
             if (_status == null || _description == null)
                 return;
-            _cancellation = new HeliosReportCancellationSource();
+            HeliosReportCancellationSource operation = BeginOperation();
             _status.text = "Building report before submit...";
-            Context.Root.Run(BuildAndSubmitRoutine(id));
+            Context.Root.Run(BuildAndSubmitRoutine(id, operation, _description.text));
         }
 
-        private IEnumerator BuildAndSubmitRoutine(HeliosTransportId id)
+        private IEnumerator BuildAndSubmitRoutine(
+            HeliosTransportId id, HeliosReportCancellationSource operation, string description)
         {
             HeliosReportBundle built = null;
             HeliosReportResult buildResult = null;
-            HeliosReportOperationContext operationContext = _cancellation.CreateContext(OnProgress);
+            HeliosReportOperationContext operationContext = CreateOperationContext(operation);
             yield return Context.Service.Reporting.BuildReport(
-                _description.text,
+                description,
                 Context.Service.Settings.MaxReportBytes,
                 operationContext,
                 (report, result) =>
@@ -1097,6 +1154,9 @@ namespace HeliosDebugger
                 built = report;
                 buildResult = result;
             });
+
+            if (!IsCurrentOperation(operation))
+                yield break;
 
             if (buildResult == null || !buildResult.Success)
             {
@@ -1106,14 +1166,16 @@ namespace HeliosDebugger
             }
 
             _lastReport = built;
-            if (_cancellation.IsCancellationRequested)
-                yield break;
 
             yield return Context.Service.Reporting.Submit(
                 id,
                 _lastReport,
                 operationContext,
-                OnReportSubmitted);
+                result =>
+                {
+                    if (IsCurrentOperation(operation))
+                        OnReportSubmitted(result);
+                });
         }
 
         private void OnReportBuilt(HeliosReportBundle report, HeliosReportResult result)

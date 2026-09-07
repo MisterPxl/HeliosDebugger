@@ -116,6 +116,7 @@ namespace HeliosDebugger
             lock (_gate)
             {
                 _capacity = Mathf.Max(32, capacity);
+                TrimPendingToCapacity();
                 changed = TrimToCapacity();
                 if (changed)
                     _revision++;
@@ -217,7 +218,14 @@ namespace HeliosDebugger
             lock (_gate)
             {
                 _pending.Enqueue(entry);
+                TrimPendingToCapacity();
             }
+        }
+
+        private void TrimPendingToCapacity()
+        {
+            while (_pending.Count > _capacity)
+                _pending.Dequeue();
         }
 
         private bool TrimToCapacity()

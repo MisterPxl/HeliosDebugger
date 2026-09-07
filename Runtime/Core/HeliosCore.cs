@@ -168,6 +168,8 @@ namespace HeliosDebugger
         public IReadOnlyList<IHeliosOptionControlBuilder> OptionControlBuilders => _optionControlBuilders;
         public IReadOnlyList<HeliosActionDefinition> Actions => _actions;
         internal bool HasAttachedRoot => _context != null && _context.Root != null;
+        public bool CanInteractWithDebugger => !_disposed && IsVisible &&
+            Access.Policy.Evaluate(new HeliosAccessRequest(HeliosAccessOperation.OpenDebugger)) == HeliosAccessDecision.Allow;
 
         private HeliosService(HeliosDebuggerSettings settings)
         {
@@ -178,6 +180,7 @@ namespace HeliosDebugger
             SystemInfo = new HeliosSystemInfoRegistry();
             Reporting = new HeliosReportService(Logs, Profiler, SystemInfo);
             Access = new HeliosAccessController(CreateAccessPolicy(Settings));
+            Access.Changed += RevalidateAccess;
             foreach (IHeliosOptionControlBuilder builder in HeliosBuiltInOptionControls.Create())
                 RegisterOptionControlBuilder(builder);
         }
@@ -524,7 +527,14 @@ namespace HeliosDebugger
 
         public void Tick(float deltaTime)
         {
+            RevalidateAccess();
             Profiler.Tick(deltaTime);
+        }
+
+        private void RevalidateAccess()
+        {
+            if (IsVisible && !CanInteractWithDebugger)
+                Hide();
         }
 
         public void Dispose()
@@ -533,6 +543,7 @@ namespace HeliosDebugger
                 return;
 
             _disposed = true;
+            Access.Changed -= RevalidateAccess;
             for (int i = 0; i < _tabs.Count; i++)
                 DisposeTabSafely(_tabs[i]);
             _tabs.Clear();

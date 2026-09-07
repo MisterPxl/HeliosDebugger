@@ -203,6 +203,7 @@ namespace HeliosDebugger
         }
 
         public event Action<HeliosAccessRequest> ChallengeRequested;
+        public event Action Changed;
 
         public IHeliosAccessPolicy Policy => _policy;
 
@@ -210,6 +211,7 @@ namespace HeliosDebugger
         {
             _pendingContinuation = null;
             _policy = policy ?? new HeliosAllowAllAccessPolicy();
+            Changed?.Invoke();
         }
 
         public HeliosAccessDecision Check(HeliosAccessRequest request)
@@ -252,6 +254,7 @@ namespace HeliosDebugger
             _pendingContinuation = null;
             IHeliosChallengeAccessPolicy challenge = _policy as IHeliosChallengeAccessPolicy;
             challenge?.Lock();
+            Changed?.Invoke();
         }
     }
 }

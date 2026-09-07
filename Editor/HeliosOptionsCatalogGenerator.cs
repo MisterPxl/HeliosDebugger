@@ -14,7 +14,8 @@ namespace HeliosDebugger.Editor
     {
         private const string DirectoryPath = "Assets/HeliosDebuggerGenerated";
         private const string CatalogPath = DirectoryPath + "/HeliosGeneratedOptionsCatalog.g.cs";
-        private const string LinkPath = DirectoryPath + "/HeliosGeneratedOptions.link.xml";
+        private const string LinkPath = DirectoryPath + "/link.xml";
+        private const string LegacyLinkPath = DirectoryPath + "/HeliosGeneratedOptions.link.xml";
 
         [MenuItem("Tools/HeliosDebugger/Regenerate Options Catalog")]
         public static void Generate()
@@ -23,6 +24,8 @@ namespace HeliosDebugger.Editor
             Directory.CreateDirectory(DirectoryPath);
             bool changed = WriteIfChanged(CatalogPath, BuildCatalog(types));
             changed |= WriteIfChanged(LinkPath, BuildLinkXml(types));
+            if (File.Exists(LegacyLinkPath))
+                changed |= AssetDatabase.DeleteAsset(LegacyLinkPath);
             if (changed)
                 AssetDatabase.Refresh();
         }
