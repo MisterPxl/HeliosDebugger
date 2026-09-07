@@ -237,3 +237,27 @@ Remove dependent integrations and project references to Helios APIs/annotations
 before removing the base package. Review project-owned settings and generated
 catalogs separately. To keep the annotations while excluding the runtime from
 Release builds, use `HELIOS_DEBUGGER_DISABLE` as described above.
+
+## Service lifecycle (2.4.0 candidate)
+
+The working source version is 2.4.0; these APIs are not present in the older
+installation tags above. Use the validated Astra Git revision until a new release
+is tagged. Integrations requiring these APIs must declare Helios 2.4.0 or later.
+
+Subscribe to `Helios.Initialized` and `Helios.ShuttingDown` to follow service
+generations without starting the debugger. Use `Helios.TryGetService(out var service)`
+to attach immediately when a generation already exists. Reading `Helios.Service`
+still initializes it lazily, preserving its existing standalone behavior.
+
+Notifications are synchronous on the calling thread; call lifecycle and registration
+APIs on Unity’s main thread. `ShuttingDown` runs before service disposal, after
+`TryGetService` starts returning false. Detach from the supplied service rather
+than reading `Helios.Service`. Reentrant `Initialize`/`Shutdown` is rejected;
+subscriber exceptions are logged without skipping the other subscribers.
+
+Each integration owns and removes its exact registrations, then unsubscribes when
+it is disposed. `service.UnregisterAction(action)` preserves a replacement action
+with the same ID. `Helios.Shutdown(expectedService)` cannot stop a newer generation.
+Lifecycle subscriptions and tab providers reset at SubsystemRegistration; static
+integrations should register again at BeforeSceneLoad. Scene reload disabled is
+not qualified by the current Astra session tests.

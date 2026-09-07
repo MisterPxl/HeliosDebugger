@@ -9,15 +9,44 @@ namespace HeliosDebugger
         private static readonly List<IHeliosTabProvider> TabProviders = new List<IHeliosTabProvider>();
         private static HeliosService _service;
 
-        public static HeliosService Service => _service ?? (_service = HeliosService.CreateDefault());
+        private static bool _changingService;
+
+        /// <summary>Passive lifecycle notifications; subscribing never initializes Helios.</summary>
+        public static event Action<HeliosService> Initialized;
+        public static event Action<HeliosService> ShuttingDown;
+
+        public static HeliosService Service
+        {
+            get
+            {
+                if (_service == null) Initialize();
+                return _service;
+            }
+        }
+
+        public static bool TryGetService(out HeliosService service)
+        {
+            service = _service;
+            return service != null;
+        }
         public static bool IsInitialized => _service != null;
 
         public static void Initialize(HeliosDebuggerSettings settings = null)
         {
-            if (_service == null)
+            if (_changingService)
+                throw new InvalidOperationException("Helios lifecycle cannot be changed from a lifecycle notification.");
+            if (_service != null)
+            {
+                if (settings != null) _service.ApplySettings(settings);
+                return;
+            }
+            _changingService = true;
+            try
+            {
                 _service = HeliosService.CreateDefault(settings);
-            else if (settings != null)
-                _service.ApplySettings(settings);
+                NotifyLifecycle(Initialized, _service);
+            }
+            finally { _changingService = false; }
         }
 
         public static void Show() => Service.Show();
@@ -107,8 +136,45 @@ namespace HeliosDebugger
 
         public static void Shutdown()
         {
-            _service?.Dispose();
+            if (_changingService)
+                throw new InvalidOperationException("Helios lifecycle cannot be changed from a lifecycle notification.");
+            if (_service == null) return;
+            _changingService = true;
+            HeliosService previous = _service;
             _service = null;
+            try
+            {
+                NotifyLifecycle(ShuttingDown, previous);
+                previous.Dispose();
+            }
+            finally { _changingService = false; }
+        }
+
+        /// <summary>Only the owner of the current generation may shut it down.</summary>
+        public static bool Shutdown(HeliosService expectedService)
+        {
+            if (expectedService == null || !ReferenceEquals(_service, expectedService)) return false;
+            Shutdown();
+            return true;
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetSession()
+        {
+            Shutdown();
+            Initialized = null;
+            ShuttingDown = null;
+            TabProviders.Clear();
+        }
+
+        private static void NotifyLifecycle(Action<HeliosService> handlers, HeliosService service)
+        {
+            if (handlers == null) return;
+            foreach (Action<HeliosService> handler in handlers.GetInvocationList())
+            {
+                try { handler(service); }
+                catch (Exception exception) { UnityEngine.Debug.LogException(exception); }
+            }
         }
 
         internal static void MaterializeTabProviders(HeliosService service)
@@ -161,6 +227,7 @@ namespace HeliosDebugger
         public HeliosReportService Reporting { get; }
         public HeliosAccessController Access { get; }
         public bool IsVisible { get; private set; }
+        public bool IsDisposed => _disposed;
         public IHeliosTab ActiveTab { get; private set; }
         public IReadOnlyList<IHeliosTab> Tabs => _tabs;
         public IReadOnlyList<IHeliosOverlay> Overlays => _overlays;
@@ -427,6 +494,14 @@ namespace HeliosDebugger
             ActionsChanged?.Invoke();
         }
 
+        /// <summary>Removes this exact registration without removing a replacement sharing its ID.</summary>
+        public bool UnregisterAction(HeliosActionDefinition action)
+        {
+            if (action == null || !_actions.Remove(action)) return false;
+            ActionsChanged?.Invoke();
+            return true;
+        }
+
         public void AddOptionContainer(IHeliosOptionContainer container)
         {
             Options.RegisterOptionContainer(container);
@@ -543,6 +618,7 @@ namespace HeliosDebugger
                 return;
 
             _disposed = true;
+            _actions.Clear();
             Access.Changed -= RevalidateAccess;
             for (int i = 0; i < _tabs.Count; i++)
                 DisposeTabSafely(_tabs[i]);

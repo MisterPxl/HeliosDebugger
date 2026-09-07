@@ -6,6 +6,17 @@ and the package adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Prepare the 2.4.0 candidate with passive `Initialized`/`ShuttingDown` service notifications, `TryGetService`, and exact-instance action removal.
+- Reset service observers and deferred tab providers between Play sessions, including when domain reload is disabled.
+
+### Fixed
+
+- Shut down only the service generation owned by a root; hide and retire stopped roots without letting delayed destruction shut down a newer debugger.
+- Keep newer roots’ shared icon/shape resources alive when an old root is destroyed.
+
+
 ### Changed
 
 - Adopt Astra display names, menus, integration terminology and shared documentation conventions. Package IDs and C# APIs remain unchanged.

@@ -74,6 +74,7 @@ namespace HeliosDebugger
             _service.AttachRoot(this);
             EnsureEventSystem();
             BuildInterface();
+            Helios.ShuttingDown += OnServiceShuttingDown;
             _service.VisibilityChanged += OnVisibilityChanged;
             _service.TabsChanged += RebuildTabs;
             _service.OverlaysChanged += RebuildOverlays;
@@ -86,6 +87,7 @@ namespace HeliosDebugger
 
         private void Update()
         {
+            if (_service == null || _service.IsDisposed) return;
             _service.Logs.FlushPending();
             _service.Tick(Time.unscaledDeltaTime);
             PollKeyboardAndGamepad();
@@ -110,8 +112,16 @@ namespace HeliosDebugger
                 HeliosPersistence.FlushIfDirty();
         }
 
+        private void OnServiceShuttingDown(HeliosService service)
+        {
+            if (!ReferenceEquals(service, _service)) return;
+            gameObject.SetActive(false);
+            Destroy(gameObject);
+        }
+
         private void OnDestroy()
         {
+            Helios.ShuttingDown -= OnServiceShuttingDown;
             HeliosPersistence.FlushIfDirty();
             if (_service != null)
             {
@@ -119,13 +129,17 @@ namespace HeliosDebugger
                 _service.TabsChanged -= RebuildTabs;
                 _service.OverlaysChanged -= RebuildOverlays;
                 _service.Access.ChallengeRequested -= OnAccessChallengeRequested;
-                Helios.Shutdown();
+                Helios.Shutdown(_service);
             }
 
             if (_widgets != null)
                 _widgets.DestroyGeneratedAssets();
-            HeliosShapeLibrary.Clear();
-            HeliosIcons.ClearCache();
+            // A delayed OnDestroy from an old root must not invalidate the new root's resources.
+            if (!Helios.IsInitialized)
+            {
+                HeliosShapeLibrary.Clear();
+                HeliosIcons.ClearCache();
+            }
         }
 
         public Coroutine Run(IEnumerator routine)
