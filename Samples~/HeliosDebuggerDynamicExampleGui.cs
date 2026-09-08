@@ -1,8 +1,9 @@
 #if !HELIOS_DEBUGGER_DISABLE
 using UnityEngine;
 
-namespace HeliosDebugger.Samples
+namespace Astra.Helios.Samples
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.Samples")]
     public sealed class HeliosDebuggerDynamicExampleGui : MonoBehaviour
     {
         [SerializeField] private HeliosDebuggerDynamicExample _dynamicExample;

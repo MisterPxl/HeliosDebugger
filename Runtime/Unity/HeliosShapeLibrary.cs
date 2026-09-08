@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
     internal static class HeliosObjectUtility
     {
@@ -18,6 +18,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public static class HeliosShapeLibrary
     {
         private const int TextureSize = 64;

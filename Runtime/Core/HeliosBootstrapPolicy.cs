@@ -1,5 +1,6 @@
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public static class HeliosBootstrapPolicy
     {
         public static bool CanRun(

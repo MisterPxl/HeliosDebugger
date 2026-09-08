@@ -3,13 +3,15 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public interface IHeliosReportRedactor
     {
         string Redact(string text);
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosReportRedactor : IHeliosReportRedactor
     {
         private static readonly string[] DefaultSensitiveKeys =

@@ -2,13 +2,15 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public interface IHeliosTabIcon
     {
         Sprite Icon { get; }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     [CreateAssetMenu(fileName = "HeliosIconSet", menuName = "Astra/Helios/Icon Set")]
     public sealed class HeliosIconSet : ScriptableObject
     {
@@ -41,6 +43,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public static class HeliosIcons
     {
         public const string Console = "terminal";

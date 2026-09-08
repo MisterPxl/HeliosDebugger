@@ -5,8 +5,9 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public enum HeliosOptionValueKind
     {
         Unsupported,
@@ -20,6 +21,7 @@ namespace HeliosDebugger
         Color
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosOptionsRegistry : IDisposable
     {
         private readonly List<object> _instances = new List<object>();
@@ -501,6 +503,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosOptionMember : IHeliosValueOption
     {
         private readonly object _target;
@@ -553,7 +556,7 @@ namespace HeliosDebugger
         public HeliosRangeAttribute Range { get; }
         // Keyed on the member name rather than the display name: display names
         // are editable labels and two options in one type may share one.
-        public string PersistenceKey => $"HeliosOption.{DeclaringType.FullName}.{MemberName}";
+        public string PersistenceKey => $"HeliosOption.{HeliosTypeIdentityAttribute.GetId(DeclaringType)}.{MemberName}";
 
         public static HeliosOptionMember FromField(Type declaringType, object target, FieldInfo field, HeliosOptionAttribute attribute, HeliosOptionsAttribute typeAttribute)
         {
@@ -722,6 +725,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosReflectedAction : IHeliosActionOption
     {
         private readonly object _target;
@@ -820,6 +824,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosActionParameter
     {
         private readonly ParameterInfo _parameter;

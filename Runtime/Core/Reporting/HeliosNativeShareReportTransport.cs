@@ -2,8 +2,9 @@ using System;
 using System.Collections;
 using UnityEngine;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public interface IHeliosNativeShareProvider
     {
         bool IsAvailable { get; }
@@ -14,6 +15,7 @@ namespace HeliosDebugger
             Action<HeliosReportResult> complete);
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosNativeShareProviderRegistry
     {
         private IHeliosNativeShareProvider _provider;
@@ -51,6 +53,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosNativeShareReportTransport : IHeliosReportTransport
     {
         private readonly HeliosNativeShareProviderRegistry _providers;

@@ -8,8 +8,10 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
+    [HeliosTypeIdentity("HeliosDebugger.HeliosConsoleTab")]
     public sealed class HeliosConsoleTab : HeliosTabBase, IHeliosTabIcon
     {
         private readonly HeliosLogFilter _filter = new HeliosLogFilter();
@@ -183,6 +185,8 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
+    [HeliosTypeIdentity("HeliosDebugger.HeliosProfilerTab")]
     public sealed class HeliosProfilerTab : HeliosTabBase, IHeliosTabIcon
     {
         private readonly List<float> _frameTimes = new List<float>();
@@ -415,6 +419,8 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
+    [HeliosTypeIdentity("HeliosDebugger.HeliosOptionsTab")]
     public sealed class HeliosOptionsTab : HeliosTabBase, IHeliosTabOpenHandler, IHeliosTabIcon
     {
         private const int ForceRebuildRevision = -1;
@@ -948,6 +954,8 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
+    [HeliosTypeIdentity("HeliosDebugger.HeliosSystemInfoTab")]
     public sealed class HeliosSystemInfoTab : HeliosTabBase, IHeliosTabOpenHandler, IHeliosTabIcon
     {
         private TextMeshProUGUI _info;
@@ -994,6 +1002,8 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
+    [HeliosTypeIdentity("HeliosDebugger.HeliosBugReporterTab")]
     public sealed class HeliosBugReporterTab : HeliosTabBase, IHeliosTabIcon
     {
         private TMP_InputField _description;

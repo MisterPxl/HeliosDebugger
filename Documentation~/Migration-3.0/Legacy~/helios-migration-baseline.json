@@ -1,0 +1,12 @@
+{
+    "sourceNamespace": "HeliosDebugger",
+    "guids": [
+        "e8a77c19f40d54bc3b1ef622f753e55f",
+        "adb115796fd814dc597ad8e0b746cfa5",
+        "0ad475ec1c9aa44ab91941b2f67e00b4"
+    ],
+    "tabKey": "HeliosDebugger.LastTab",
+    "tabValue": "HeliosDebugger.HeliosProfilerTab",
+    "optionKey": "HeliosOption.HeliosDebugger.Samples.HeliosDebuggerExample.EnemySpawnCount",
+    "optionValue": "17"
+}

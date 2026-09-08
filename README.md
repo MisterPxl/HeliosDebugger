@@ -2,8 +2,9 @@
 
 Part of the **Astra** family. This package works independently of the Astra framework.
 
-The Astra menu labels described here are unreleased. Existing published tags keep
-their previous labels until the next release; package IDs and C# APIs are unchanged.
+This branch contains the **3.0.0 migration candidate** with Astra namespaces and
+assemblies. Read the [migration guide](Documentation~/Migration-3.0/README.md) before
+upgrading. Package IDs remain stable; no 3.0 release tag is published yet.
 
 HeliosDebugger is a standalone runtime debugger for Unity projects.
 
@@ -21,7 +22,7 @@ It provides:
 Add the package to the project's `Packages/manifest.json`:
 
 ```json
-"com.misterpxl.helios-debugger": "https://github.com/misterpxl/HeliosDebugger.git#v2.3.1"
+"com.misterpxl.helios-debugger": "https://github.com/misterpxl/HeliosDebugger.git#codex/astra-foundation"
 ```
 
 By default it bootstraps itself in the Editor and Development Builds only.
@@ -50,7 +51,7 @@ the backquote key to inspect the static and dynamic sample options.
 ## Options
 
 ```csharp
-using HeliosDebugger;
+using Astra.Helios;
 
 [HeliosOptions("Gameplay")]
 public static class GameplayDebugOptions
@@ -238,11 +239,11 @@ before removing the base package. Review project-owned settings and generated
 catalogs separately. To keep the annotations while excluding the runtime from
 Release builds, use `HELIOS_DEBUGGER_DISABLE` as described above.
 
-## Service lifecycle (2.4.0 candidate)
+## Service lifecycle
 
-The working source version is 2.4.0; these APIs are not present in the older
-installation tags above. Use the validated Astra Git revision until a new release
-is tagged. Integrations requiring these APIs must declare Helios 2.4.0 or later.
+These passive lifecycle APIs were introduced in the 2.4 candidate and are retained
+in Helios 3.0 under Astra namespaces. Current integrations target Helios 3.x.
+Use the validated Astra Git revision until a new release is tagged.
 
 Subscribe to `Helios.Initialized` and `Helios.ShuttingDown` to follow service
 generations without starting the debugger. Use `Helios.TryGetService(out var service)`

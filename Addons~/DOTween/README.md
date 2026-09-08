@@ -1,8 +1,9 @@
 # Astra Helios — DOTween Integration
 
 An optional **Astra integration**. Install its prerequisites explicitly; the base
-packages remain usable independently. Astra labels in this working copy will ship
-with the next release; existing published tags retain their earlier labels.
+packages remain usable independently. This **2.0.0 migration candidate** requires
+Helios 3.x and uses `Astra.Helios.Integrations.DOTween`. Existing tags keep the old
+API. See the [Helios migration guide](../../Documentation~/Migration-3.0/README.md).
 
 Optional runtime `Tweens` tab for DOTween Free. The base
 `com.misterpxl.helios-debugger` package has no DOTween dependency and continues
@@ -21,13 +22,13 @@ to compile without this integration.
 Git URL:
 
 ```text
-https://github.com/misterpxl/HeliosDebugger.git?path=/Addons~/DOTween#dotween-v1.1.3
+https://github.com/misterpxl/HeliosDebugger.git?path=/Addons~/DOTween#codex/astra-foundation
 ```
 
 Manifest entry:
 
 ```json
-"com.misterpxl.helios-debugger.dotween": "https://github.com/misterpxl/HeliosDebugger.git?path=/Addons~/DOTween#dotween-v1.1.3"
+"com.misterpxl.helios-debugger.dotween": "https://github.com/misterpxl/HeliosDebugger.git?path=/Addons~/DOTween#codex/astra-foundation"
 ```
 
 The integration lives under `Addons~` so it is never imported as content of the base
@@ -81,7 +82,7 @@ tweens with IDs and targets.
 
 The manifest declares these package versions:
 
-- `com.misterpxl.helios-debugger`: `2.2.0`.
+- `com.misterpxl.helios-debugger`: `3.0.0`.
 - `com.unity.ugui`: `2.0.0`.
 
 Install the Astra base packages explicitly in the consumer manifest, using the

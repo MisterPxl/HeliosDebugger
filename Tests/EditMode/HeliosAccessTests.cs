@@ -1,8 +1,9 @@
 using System;
 using NUnit.Framework;
 
-namespace HeliosDebugger.Tests
+namespace Astra.Helios.Tests
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.Tests", "HeliosDebugger.EditMode.Tests")]
     public sealed class HeliosAccessTests
     {
         [TestCase("lock")]

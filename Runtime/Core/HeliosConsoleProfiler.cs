@@ -5,8 +5,9 @@ using System.Threading;
 using Unity.Profiling;
 using UnityEngine;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public enum HeliosLogLevel
     {
         Log,
@@ -16,6 +17,7 @@ namespace HeliosDebugger
         Assert
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosLogEntry
     {
         public HeliosLogEntry(int sequence, DateTime timestamp, HeliosLogLevel level, string message, string stackTrace)
@@ -56,6 +58,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosLogStore : IDisposable
     {
         private readonly object _gate = new object();
@@ -259,6 +262,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosProfilerSample
     {
         public HeliosProfilerSample(float frameMs, long totalMemory, long gcAllocated, long drawCalls, long scriptsTime)
@@ -296,6 +300,7 @@ namespace HeliosDebugger
         public long ScriptsTime { get; }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosProfilerSampler : IDisposable
     {
         private readonly List<HeliosProfilerSample> _history = new List<HeliosProfilerSample>();

@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public struct HeliosTransportId : IEquatable<HeliosTransportId>
     {
         public static readonly HeliosTransportId LocalExport = new HeliosTransportId("local.export");
@@ -61,6 +62,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosReportArtifact
     {
         private readonly byte[] _content;
@@ -105,6 +107,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosReportBundle
     {
         private readonly List<HeliosReportArtifact> _artifacts;
@@ -170,6 +173,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosReportResult
     {
         private HeliosReportResult(

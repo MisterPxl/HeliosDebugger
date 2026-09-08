@@ -4,8 +4,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosOptionControlContext
     {
         private readonly Action<Action> _registerRefresh;
@@ -43,6 +44,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public interface IHeliosOptionControlBuilder
     {
         int Order { get; }
@@ -50,6 +52,7 @@ namespace HeliosDebugger
         void Build(HeliosOptionControlContext context, IHeliosValueOption option);
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public static class HeliosBuiltInOptionControls
     {
         public static IEnumerable<IHeliosOptionControlBuilder> Create()

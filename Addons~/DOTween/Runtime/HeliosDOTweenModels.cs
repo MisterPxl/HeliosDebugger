@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace HeliosDebugger.DOTween
+namespace Astra.Helios.Integrations.DOTween
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.DOTween", "HeliosDebugger.DOTween.Runtime")]
     public sealed class DOTweenTweenSnapshot
     {
         public DOTweenTweenSnapshot(
@@ -44,6 +45,7 @@ namespace HeliosDebugger.DOTween
         public int CompletedLoops { get; }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.DOTween", "HeliosDebugger.DOTween.Runtime")]
     public sealed class DOTweenMonitorSnapshot
     {
         public DOTweenMonitorSnapshot(
@@ -67,6 +69,7 @@ namespace HeliosDebugger.DOTween
         public IReadOnlyList<DOTweenTweenSnapshot> Tweens { get; }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.DOTween", "HeliosDebugger.DOTween.Runtime")]
     public interface IDOTweenMonitor
     {
         DOTweenMonitorSnapshot Capture();
@@ -79,6 +82,7 @@ namespace HeliosDebugger.DOTween
         void KillAll();
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.DOTween", "HeliosDebugger.DOTween.Runtime")]
     public static class DOTweenTweenFilter
     {
         public static bool Matches(DOTweenTweenSnapshot tween, string search)
@@ -100,6 +104,7 @@ namespace HeliosDebugger.DOTween
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.DOTween", "HeliosDebugger.DOTween.Runtime")]
     public sealed class DOTweenRefreshThrottle
     {
         private readonly float _interval;
@@ -128,6 +133,7 @@ namespace HeliosDebugger.DOTween
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.DOTween", "HeliosDebugger.DOTween.Runtime")]
     public sealed class DOTweenKillAllConfirmation
     {
         private readonly float _duration;

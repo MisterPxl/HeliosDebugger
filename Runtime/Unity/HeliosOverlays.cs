@@ -1,7 +1,8 @@
 using UnityEngine;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosOverlayContext
     {
         public HeliosOverlayContext(HeliosService service, HeliosDebuggerRoot root)
@@ -14,6 +15,7 @@ namespace HeliosDebugger
         public HeliosDebuggerRoot Root { get; }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public interface IHeliosOverlay
     {
         string Id { get; }
@@ -24,6 +26,7 @@ namespace HeliosDebugger
         void Dispose();
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public abstract class HeliosOverlayBase : IHeliosOverlay
     {
         protected HeliosOverlayContext Context { get; private set; }

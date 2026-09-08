@@ -3,8 +3,9 @@ using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace HeliosDebugger.Tests
+namespace Astra.Helios.Tests
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.Tests", "HeliosDebugger.EditMode.Tests")]
     public sealed class HeliosLogStoreTests
     {
         [TestCase(32, 32)]

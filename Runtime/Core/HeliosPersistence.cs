@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
     /// <summary>
     /// Batches PlayerPrefs writes: option changes mark the store dirty and the

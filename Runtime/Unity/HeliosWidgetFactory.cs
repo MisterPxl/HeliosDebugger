@@ -6,8 +6,9 @@ using UnityEngine.Events;
 using UnityEngine.TextCore.LowLevel;
 using UnityEngine.UI;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public readonly struct HeliosButtonStyle
     {
         public HeliosButtonStyle(Color normal, Color hover, Color pressed, Color disabled, Color text, float radius, int horizontalPadding)
@@ -60,6 +61,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosSwitchControl
     {
         private readonly Image _track;
@@ -99,6 +101,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosWidgetFactory
     {
         private readonly Font _font;

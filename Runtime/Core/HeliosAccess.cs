@@ -1,8 +1,9 @@
 using System;
 using System.Security.Cryptography;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public enum HeliosAccessOperation
     {
         OpenDebugger,
@@ -11,6 +12,7 @@ namespace HeliosDebugger
         ViewSensitiveSystemInfo
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public enum HeliosAccessDecision
     {
         Allow,
@@ -18,6 +20,7 @@ namespace HeliosDebugger
         Challenge
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public readonly struct HeliosAccessRequest
     {
         public HeliosAccessRequest(HeliosAccessOperation operation, string resourceId = null)
@@ -30,17 +33,20 @@ namespace HeliosDebugger
         public string ResourceId { get; }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public interface IHeliosAccessPolicy
     {
         HeliosAccessDecision Evaluate(HeliosAccessRequest request);
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public interface IHeliosChallengeAccessPolicy : IHeliosAccessPolicy
     {
         bool TryUnlock(string credential);
         void Lock();
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosAllowAllAccessPolicy : IHeliosAccessPolicy
     {
         public HeliosAccessDecision Evaluate(HeliosAccessRequest request)
@@ -49,6 +55,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosDenyAllAccessPolicy : IHeliosAccessPolicy
     {
         public HeliosAccessDecision Evaluate(HeliosAccessRequest request)
@@ -57,6 +64,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosPinAccessPolicy : IHeliosChallengeAccessPolicy
     {
         public const int SaltBytes = 16;
@@ -192,6 +200,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosAccessController
     {
         private IHeliosAccessPolicy _policy;

@@ -1,0 +1,25 @@
+{
+  "name": "Astra.Helios.Tests.PlayMode",
+  "rootNamespace": "Astra.Helios.Tests",
+  "references": [
+    "Astra.Helios.Runtime",
+    "Unity.TextMeshPro",
+    "Astra.Helios.Annotations",
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS",
+    "!HELIOS_DEBUGGER_DISABLE"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

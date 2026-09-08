@@ -1,0 +1,20 @@
+{
+  "name": "Astra.Helios.Runtime",
+  "rootNamespace": "Astra.Helios",
+  "references": [
+    "Astra.Helios.Annotations",
+    "Unity.InputSystem",
+    "Unity.TextMeshPro"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [
+    "!HELIOS_DEBUGGER_DISABLE"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

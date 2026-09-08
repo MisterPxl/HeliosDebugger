@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e35bc7f06465496c87eec6de60da30e, type: 3}
+  m_Name: Graph
+  m_EditorClassIdentifier: Astra.Helios.MigrationProbe::HeliosMigrationFixture
+  First:
+    rid: 5529774018183299072
+  Second:
+    rid: 5529774018183299072
+  Graph:
+    rid: 5529774018183299073
+  references:
+    version: 2
+    RefIds:
+    - rid: 5529774018183299072
+      type: {class: HeliosSerializablePair, ns: HeliosDebugger, asm: HeliosDebugger.Runtime}
+      data:
+        _key: legacy-key
+        _value: legacy-value
+    - rid: 5529774018183299073
+      type: {class: HeliosMigrationNode, ns: , asm: Astra.Helios.MigrationProbe}
+      data:
+        Next:
+          rid: 5529774018183299073
+        Pair:
+          rid: 5529774018183299072

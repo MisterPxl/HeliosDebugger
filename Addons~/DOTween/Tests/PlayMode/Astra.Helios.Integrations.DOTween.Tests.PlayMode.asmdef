@@ -1,0 +1,29 @@
+{
+  "name": "Astra.Helios.Integrations.DOTween.Tests.PlayMode",
+  "rootNamespace": "Astra.Helios.Integrations.DOTween.Tests",
+  "references": [
+    "Astra.Helios.Runtime",
+    "Astra.Helios.Integrations.DOTween.Runtime",
+    "UnityEngine.TestRunner"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS",
+    "DOTWEEN",
+    "!HELIOS_DEBUGGER_DISABLE",
+    "ASTRA_HELIOS_V3"
+  ],
+  "versionDefines": [
+    {
+      "name": "com.misterpxl.helios-debugger",
+      "expression": "[3.0.0,4.0.0)",
+      "define": "ASTRA_HELIOS_V3"
+    }
+  ],
+  "noEngineReferences": false
+}

@@ -9,8 +9,9 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
 
-namespace HeliosDebugger.Tests
+namespace Astra.Helios.Tests
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.Tests", "HeliosDebugger.PlayMode.Tests")]
     public sealed class HeliosInteractionTests
     {
         private HeliosDebuggerRoot _root;

@@ -3,8 +3,9 @@ using TMPro;
 using UnityEditor;
 using UnityEngine;
 
-namespace HeliosDebugger.Editor
+namespace Astra.Helios.Editor
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.Editor", "HeliosDebugger.Editor")]
     [InitializeOnLoad]
     public static class HeliosTextMeshProResources
     {

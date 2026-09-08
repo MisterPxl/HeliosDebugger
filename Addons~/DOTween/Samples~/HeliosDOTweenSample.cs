@@ -2,8 +2,9 @@
 using DG.Tweening;
 using UnityEngine;
 
-namespace HeliosDebugger.DOTween.Samples
+namespace Astra.Helios.Integrations.DOTween.Samples
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.DOTween.Samples")]
     public sealed class HeliosDOTweenSample : MonoBehaviour
     {
         [SerializeField] private float _distance = 3f;

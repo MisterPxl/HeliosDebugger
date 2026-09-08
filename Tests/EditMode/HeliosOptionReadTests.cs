@@ -2,8 +2,9 @@ using System;
 using System.Linq;
 using NUnit.Framework;
 
-namespace HeliosDebugger.Tests
+namespace Astra.Helios.Tests
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.Tests", "HeliosDebugger.EditMode.Tests")]
     public sealed class HeliosOptionReadTests
     {
         [Test]

@@ -3,8 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosMaterializedArtifact
     {
         public HeliosMaterializedArtifact(string name, string mimeType, string path)
@@ -21,6 +22,7 @@ namespace HeliosDebugger
         public string Path { get; private set; }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosMaterializedReport
     {
         private readonly IReadOnlyList<HeliosMaterializedArtifact> _artifacts;
@@ -52,6 +54,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosReportMaterializer
     {
         public IEnumerator Materialize(

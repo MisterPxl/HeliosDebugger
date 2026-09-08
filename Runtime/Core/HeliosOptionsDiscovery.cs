@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public static class HeliosGeneratedOptions
     {
         private static readonly List<Type> RegisteredTypes = new List<Type>();

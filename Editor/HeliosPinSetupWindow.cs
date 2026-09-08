@@ -1,8 +1,9 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace HeliosDebugger.Editor
+namespace Astra.Helios.Editor
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.Editor", "HeliosDebugger.Editor")]
     public sealed class HeliosPinSetupWindow : EditorWindow
     {
         [System.NonSerialized] private string _pin = string.Empty;

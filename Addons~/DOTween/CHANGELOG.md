@@ -2,11 +2,17 @@
 
 All notable changes to the Helios Debugger DOTween addon are documented here.
 
+## 2.0.0 — migration candidate (unreleased)
+
+- Target Helios 3.x and rename namespaces/assemblies to Astra.Helios.Integrations.DOTween.
+- Preserve the Tweens tab identity and script/assembly metadata.
+- Keep DOTween and Helios compile constraints aligned across runtime and tests.
+
 ## [Unreleased]
 
 ### Changed
 
-- Adopt Astra display names, menus, integration terminology and shared documentation conventions. Package IDs and C# APIs remain unchanged.
+- Adopt Astra display names, menus, integration terminology and shared documentation conventions. Package IDs remain unchanged; the migration candidate above changes C# APIs.
 
 ## [1.1.3] - 2026-08-10
 

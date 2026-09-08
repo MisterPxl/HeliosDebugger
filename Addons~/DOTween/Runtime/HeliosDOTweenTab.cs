@@ -5,8 +5,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace HeliosDebugger.DOTween
+namespace Astra.Helios.Integrations.DOTween
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.DOTween", "HeliosDebugger.DOTween.Runtime")]
     public sealed class HeliosDOTweenTabProvider : IHeliosTabProvider
     {
         public IHeliosTab CreateTab()
@@ -24,6 +25,8 @@ namespace HeliosDebugger.DOTween
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.DOTween", "HeliosDebugger.DOTween.Runtime")]
+    [HeliosTypeIdentity("HeliosDebugger.DOTween.HeliosDOTweenTab")]
     public sealed class HeliosDOTweenTab : HeliosTabBase, IHeliosTabIcon
     {
         // Documented behaviour: snapshots refresh at most four times per second.

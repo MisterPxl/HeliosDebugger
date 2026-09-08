@@ -3,14 +3,19 @@ using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-namespace HeliosDebugger.Editor
+namespace Astra.Helios.Editor
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.Editor", "HeliosDebugger.Editor")]
     public sealed class HeliosDebuggerBuildValidator : IPreprocessBuildWithReport
     {
         public int callbackOrder => 1000;
 
         public void OnPreprocessBuild(BuildReport report)
         {
+            const string catalog = "Assets/HeliosDebuggerGenerated/HeliosGeneratedOptionsCatalog.g.cs";
+            if (System.IO.File.Exists(catalog) && System.IO.File.ReadAllText(catalog).Contains("HeliosDebugger.HeliosGeneratedOptions.Register"))
+                throw new BuildFailedException("Regenerate the Helios options catalog before building after the Astra API migration (Tools/Astra/Helios/Regenerate Options Catalog).");
+
             if (!HeliosTextMeshProResources.HasEssentialResources)
                 throw new BuildFailedException(HeliosTextMeshProResources.MissingResourcesMessage);
 
@@ -60,6 +65,7 @@ namespace HeliosDebugger.Editor
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.Editor", "HeliosDebugger.Editor")]
     public static class HeliosDebuggerEditorMenu
     {
         [MenuItem("Tools/Astra/Helios/Create Settings Asset")]

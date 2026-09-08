@@ -1,0 +1,22 @@
+{
+  "name": "Astra.Helios.Editor",
+  "rootNamespace": "Astra.Helios.Editor",
+  "references": [
+    "Astra.Helios.Annotations",
+    "Astra.Helios.Runtime",
+    "Unity.TextMeshPro"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [
+    "!HELIOS_DEBUGGER_DISABLE"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -1,7 +1,8 @@
 using System;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosReportProgress
     {
         public HeliosReportProgress(string stage, int completedSteps, int totalSteps, string message)
@@ -35,6 +36,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosReportOperationContext
     {
         private static readonly HeliosReportOperationContext EmptyContext =
@@ -68,6 +70,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosReportCancellationSource
     {
         private bool _isCancellationRequested;

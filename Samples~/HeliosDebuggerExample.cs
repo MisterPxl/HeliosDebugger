@@ -1,8 +1,10 @@
 #if !HELIOS_DEBUGGER_DISABLE
 using UnityEngine;
 
-namespace HeliosDebugger.Samples
+namespace Astra.Helios.Samples
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.Samples")]
+    [HeliosTypeIdentity("HeliosDebugger.Samples.HeliosDebuggerExample")]
     [HeliosOptions("Sample")]
     public static class HeliosDebuggerExample
     {

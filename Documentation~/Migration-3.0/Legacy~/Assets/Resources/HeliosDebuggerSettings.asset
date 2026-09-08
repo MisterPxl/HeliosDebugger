@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2c09a8bc08a7471ba6ee780955ba9ef, type: 3}
+  m_Name: HeliosDebuggerSettings
+  m_EditorClassIdentifier: HeliosDebugger.Runtime::HeliosDebugger.HeliosDebuggerSettings
+  _autoBootstrap: 0
+  _developmentBuildOnly: 1
+  _visibleAtStartup: 0
+  _showTrigger: 1
+  _triggerCorner: 3
+  _triggerActivation: 2
+  _tripleTapWindow: 0.8
+  _triggerHoldDuration: 0.75
+  _triggerOffset: {x: 18, y: 18}
+  _triggerSize: {x: 54, y: 54}
+  _triggerLabel: H
+  _toggleKey: 290
+  _closeOnEscape: 1
+  _enableGamepadCombo: 1
+  _enableKonamiCode: 1
+  _defaultTabId: HeliosDebugger.HeliosOptionsTab
+  _rememberLastTab: 1
+  _showPinnedOverlay: 1
+  _showDockedConsole: 0
+  _showDockedProfiler: 0
+  _canvasPlacement: 0
+  _worldSpaceScale: 0.001
+  _panelOpacity: 0.65
+  _theme: {fileID: 11400000, guid: adb115796fd814dc597ad8e0b746cfa5, type: 2}
+  _logCapacity: 173
+  _profilerHistoryCapacity: 240
+  _profilerRefreshInterval: 0.25
+  _webhookUrl: 
+  _maxReportBytes: 5242880
+  _defaultReportTransportId: local.export
+  _requirePin: 0
+  _pinSalt: synthetic-migration-salt
+  _pinHash: synthetic-migration-hash
+  _pinSessionMinutes: 15
+  _allowInReleaseBuild: 0
+  _strictReleaseValidation: 1

@@ -4,8 +4,9 @@ using System.Reflection;
 using UnityEditor;
 using UnityEditor.Build;
 
-namespace HeliosDebugger.Editor
+namespace Astra.Helios.Editor
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.Editor", "HeliosDebugger.EditorBootstrap")]
     public static class HeliosDebuggerDefineMenu
     {
         private const string DisableDefine = "HELIOS_DEBUGGER_DISABLE";

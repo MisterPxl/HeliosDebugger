@@ -5,8 +5,9 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using DOTweenEngine = DG.Tweening.DOTween;
 
-namespace HeliosDebugger.DOTween.Tests
+namespace Astra.Helios.Integrations.DOTween.Tests
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.DOTween.Tests", "HeliosDebugger.DOTween.PlayMode.Tests")]
     public sealed class DOTweenMonitorPlayModeTests
     {
         private GameObject _target;

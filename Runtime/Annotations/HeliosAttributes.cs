@@ -1,6 +1,6 @@
 using System;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public sealed class HeliosOptionsAttribute : Attribute

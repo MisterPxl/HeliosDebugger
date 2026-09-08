@@ -1,7 +1,8 @@
 using UnityEngine.InputSystem;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public readonly struct HeliosShortcutContext
     {
         public HeliosShortcutContext(HeliosService service, Keyboard keyboard, Gamepad gamepad)
@@ -16,6 +17,7 @@ namespace HeliosDebugger
         public Gamepad Gamepad { get; }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public interface IHeliosShortcut
     {
         string Id { get; }

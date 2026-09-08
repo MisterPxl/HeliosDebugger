@@ -1,8 +1,9 @@
 using System;
 using UnityEngine;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public enum HeliosTriggerCorner
     {
         BottomRight,
@@ -11,6 +12,7 @@ namespace HeliosDebugger
         TopLeft
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public enum HeliosTriggerActivation
     {
         SingleTap,
@@ -19,6 +21,7 @@ namespace HeliosDebugger
         TapAndHold
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public enum HeliosCanvasPlacement
     {
         ScreenSpaceOverlay,
@@ -26,6 +29,7 @@ namespace HeliosDebugger
         WorldSpace
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     [CreateAssetMenu(fileName = "HeliosDebuggerSettings", menuName = "Astra/Helios/Settings")]
     public sealed class HeliosDebuggerSettings : ScriptableObject
     {
@@ -143,6 +147,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     [Serializable]
     public sealed class HeliosSerializablePair
     {

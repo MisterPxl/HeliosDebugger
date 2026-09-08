@@ -3,8 +3,9 @@ using System.Collections;
 using System.Text;
 using NUnit.Framework;
 
-namespace HeliosDebugger.Tests
+namespace Astra.Helios.Tests
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.Tests", "HeliosDebugger.EditMode.Tests")]
     public sealed class HeliosReportingTests
     {
         [Test]

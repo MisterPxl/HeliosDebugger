@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public static class Helios
     {
         private static readonly List<IHeliosTabProvider> TabProviders = new List<IHeliosTabProvider>();
@@ -200,6 +201,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosService
     {
         private readonly List<IHeliosTab> _tabs = new List<IHeliosTab>();
@@ -746,7 +748,7 @@ namespace HeliosDebugger
 
         private static string GetTabId(IHeliosTab tab)
         {
-            return tab.GetType().FullName ?? tab.GetType().Name;
+            return HeliosTypeIdentityAttribute.GetId(tab.GetType());
         }
 
         private static IHeliosAccessPolicy CreateAccessPolicy(HeliosDebuggerSettings settings)
@@ -769,6 +771,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosContext
     {
         public HeliosContext(HeliosService service, HeliosDebuggerRoot root)
@@ -781,6 +784,7 @@ namespace HeliosDebugger
         public HeliosDebuggerRoot Root { get; }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public interface IHeliosTab
     {
         string Title { get; }
@@ -791,6 +795,7 @@ namespace HeliosDebugger
         void Dispose();
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public interface IHeliosTabProvider
     {
         /// <summary>
@@ -799,11 +804,13 @@ namespace HeliosDebugger
         IHeliosTab CreateTab();
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public interface IHeliosTabOpenHandler
     {
         void OnOpened();
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public abstract class HeliosTabBase : IHeliosTab
     {
         protected HeliosContext Context { get; private set; }
@@ -837,6 +844,7 @@ namespace HeliosDebugger
         protected abstract void BuildContent(HeliosWidgetFactory widgets, Transform parent);
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosActionDefinition : IHeliosActionOption
     {
         private static readonly HeliosActionParameter[] NoParameters = new HeliosActionParameter[0];
@@ -887,6 +895,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosActionResult
     {
         private HeliosActionResult(bool success, string message, Exception exception)

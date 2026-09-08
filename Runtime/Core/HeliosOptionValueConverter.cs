@@ -2,8 +2,9 @@ using System;
 using System.Globalization;
 using UnityEngine;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public static class HeliosOptionValueConverter
     {
         private const NumberStyles IntegerStyles = NumberStyles.Integer;

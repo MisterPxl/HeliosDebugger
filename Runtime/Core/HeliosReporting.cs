@@ -4,14 +4,16 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public interface IHeliosSystemInfoProvider
     {
         string Name { get; }
         void Collect(List<HeliosSerializablePair> values);
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosSystemInfoRegistry
     {
         private readonly List<IHeliosSystemInfoProvider> _providers = new List<IHeliosSystemInfoProvider>();
@@ -64,6 +66,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosDefaultSystemInfoProvider : IHeliosSystemInfoProvider
     {
         public string Name
@@ -101,6 +104,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosReportService
     {
         private readonly HeliosReportBuilder _builder;

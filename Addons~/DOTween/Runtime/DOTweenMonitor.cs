@@ -5,8 +5,9 @@ using DG.Tweening;
 using UnityEngine;
 using DOTweenEngine = DG.Tweening.DOTween;
 
-namespace HeliosDebugger.DOTween
+namespace Astra.Helios.Integrations.DOTween
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.DOTween", "HeliosDebugger.DOTween.Runtime")]
     public sealed class DOTweenMonitor : IDOTweenMonitor
     {
         private const int UnsetIntId = -999;

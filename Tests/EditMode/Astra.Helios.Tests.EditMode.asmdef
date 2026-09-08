@@ -1,0 +1,27 @@
+{
+  "name": "Astra.Helios.Tests.EditMode",
+  "rootNamespace": "Astra.Helios.Tests",
+  "references": [
+    "Astra.Helios.Runtime",
+    "Astra.Helios.Editor",
+    "Astra.Helios.Annotations",
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS",
+    "!HELIOS_DEBUGGER_DISABLE"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

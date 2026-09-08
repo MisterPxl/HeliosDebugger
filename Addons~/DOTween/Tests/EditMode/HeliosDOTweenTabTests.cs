@@ -5,8 +5,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace HeliosDebugger.DOTween.Tests
+namespace Astra.Helios.Integrations.DOTween.Tests
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.DOTween.Tests", "HeliosDebugger.DOTween.EditMode.Tests")]
     public sealed class HeliosDOTweenTabTests
     {
         private GameObject _root;

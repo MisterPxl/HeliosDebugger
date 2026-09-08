@@ -1,0 +1,1147 @@
+{
+  "sourceRevision": "7201ceb8d671c3b050d027ecc2692aa243ae26c1",
+  "assemblies": {
+    "HeliosDebugger.DOTween.Runtime": "Astra.Helios.Integrations.DOTween.Runtime",
+    "HeliosDebugger.DOTween.EditMode.Tests": "Astra.Helios.Integrations.DOTween.Tests.EditMode",
+    "HeliosDebugger.DOTween.PlayMode.Tests": "Astra.Helios.Integrations.DOTween.Tests.PlayMode",
+    "HeliosDebugger.EditorBootstrap": "Astra.Helios.Bootstrap.Editor",
+    "HeliosDebugger.Editor": "Astra.Helios.Editor",
+    "HeliosDebugger.Annotations": "Astra.Helios.Annotations",
+    "HeliosDebugger.Runtime": "Astra.Helios.Runtime",
+    "HeliosDebugger.EditMode.Tests": "Astra.Helios.Tests.EditMode",
+    "HeliosDebugger.PlayMode.Tests": "Astra.Helios.Tests.PlayMode"
+  },
+  "types": [
+    {
+      "type": "DOTweenMonitor",
+      "oldNamespace": "HeliosDebugger.DOTween",
+      "newNamespace": "Astra.Helios.Integrations.DOTween",
+      "oldAssembly": "HeliosDebugger.DOTween.Runtime",
+      "newAssembly": "Astra.Helios.Integrations.DOTween.Runtime",
+      "path": "Addons~/DOTween/Runtime/DOTweenMonitor.cs"
+    },
+    {
+      "type": "DOTweenKillAllConfirmation",
+      "oldNamespace": "HeliosDebugger.DOTween",
+      "newNamespace": "Astra.Helios.Integrations.DOTween",
+      "oldAssembly": "HeliosDebugger.DOTween.Runtime",
+      "newAssembly": "Astra.Helios.Integrations.DOTween.Runtime",
+      "path": "Addons~/DOTween/Runtime/HeliosDOTweenModels.cs"
+    },
+    {
+      "type": "DOTweenRefreshThrottle",
+      "oldNamespace": "HeliosDebugger.DOTween",
+      "newNamespace": "Astra.Helios.Integrations.DOTween",
+      "oldAssembly": "HeliosDebugger.DOTween.Runtime",
+      "newAssembly": "Astra.Helios.Integrations.DOTween.Runtime",
+      "path": "Addons~/DOTween/Runtime/HeliosDOTweenModels.cs"
+    },
+    {
+      "type": "DOTweenTweenFilter",
+      "oldNamespace": "HeliosDebugger.DOTween",
+      "newNamespace": "Astra.Helios.Integrations.DOTween",
+      "oldAssembly": "HeliosDebugger.DOTween.Runtime",
+      "newAssembly": "Astra.Helios.Integrations.DOTween.Runtime",
+      "path": "Addons~/DOTween/Runtime/HeliosDOTweenModels.cs"
+    },
+    {
+      "type": "IDOTweenMonitor",
+      "oldNamespace": "HeliosDebugger.DOTween",
+      "newNamespace": "Astra.Helios.Integrations.DOTween",
+      "oldAssembly": "HeliosDebugger.DOTween.Runtime",
+      "newAssembly": "Astra.Helios.Integrations.DOTween.Runtime",
+      "path": "Addons~/DOTween/Runtime/HeliosDOTweenModels.cs"
+    },
+    {
+      "type": "DOTweenMonitorSnapshot",
+      "oldNamespace": "HeliosDebugger.DOTween",
+      "newNamespace": "Astra.Helios.Integrations.DOTween",
+      "oldAssembly": "HeliosDebugger.DOTween.Runtime",
+      "newAssembly": "Astra.Helios.Integrations.DOTween.Runtime",
+      "path": "Addons~/DOTween/Runtime/HeliosDOTweenModels.cs"
+    },
+    {
+      "type": "DOTweenTweenSnapshot",
+      "oldNamespace": "HeliosDebugger.DOTween",
+      "newNamespace": "Astra.Helios.Integrations.DOTween",
+      "oldAssembly": "HeliosDebugger.DOTween.Runtime",
+      "newAssembly": "Astra.Helios.Integrations.DOTween.Runtime",
+      "path": "Addons~/DOTween/Runtime/HeliosDOTweenModels.cs"
+    },
+    {
+      "type": "HeliosDOTweenTab",
+      "oldNamespace": "HeliosDebugger.DOTween",
+      "newNamespace": "Astra.Helios.Integrations.DOTween",
+      "oldAssembly": "HeliosDebugger.DOTween.Runtime",
+      "newAssembly": "Astra.Helios.Integrations.DOTween.Runtime",
+      "path": "Addons~/DOTween/Runtime/HeliosDOTweenTab.cs"
+    },
+    {
+      "type": "HeliosDOTweenTabProvider",
+      "oldNamespace": "HeliosDebugger.DOTween",
+      "newNamespace": "Astra.Helios.Integrations.DOTween",
+      "oldAssembly": "HeliosDebugger.DOTween.Runtime",
+      "newAssembly": "Astra.Helios.Integrations.DOTween.Runtime",
+      "path": "Addons~/DOTween/Runtime/HeliosDOTweenTab.cs"
+    },
+    {
+      "type": "HeliosDOTweenSample",
+      "oldNamespace": "HeliosDebugger.DOTween.Samples",
+      "newNamespace": "Astra.Helios.Integrations.DOTween.Samples",
+      "oldAssembly": null,
+      "newAssembly": null,
+      "path": "Addons~/DOTween/Samples~/HeliosDOTweenSample.cs"
+    },
+    {
+      "type": "HeliosDOTweenTabTests",
+      "oldNamespace": "HeliosDebugger.DOTween.Tests",
+      "newNamespace": "Astra.Helios.Integrations.DOTween.Tests",
+      "oldAssembly": "HeliosDebugger.DOTween.EditMode.Tests",
+      "newAssembly": "Astra.Helios.Integrations.DOTween.Tests.EditMode",
+      "path": "Addons~/DOTween/Tests/EditMode/HeliosDOTweenTabTests.cs"
+    },
+    {
+      "type": "DOTweenMonitorPlayModeTests",
+      "oldNamespace": "HeliosDebugger.DOTween.Tests",
+      "newNamespace": "Astra.Helios.Integrations.DOTween.Tests",
+      "oldAssembly": "HeliosDebugger.DOTween.PlayMode.Tests",
+      "newAssembly": "Astra.Helios.Integrations.DOTween.Tests.PlayMode",
+      "path": "Addons~/DOTween/Tests/PlayMode/DOTweenMonitorPlayModeTests.cs"
+    },
+    {
+      "type": "HeliosDebuggerDefineMenu",
+      "oldNamespace": "HeliosDebugger.Editor",
+      "newNamespace": "Astra.Helios.Editor",
+      "oldAssembly": "HeliosDebugger.EditorBootstrap",
+      "newAssembly": "Astra.Helios.Bootstrap.Editor",
+      "path": "Editor/Bootstrap/HeliosDebuggerDefineMenu.cs"
+    },
+    {
+      "type": "HeliosDebuggerEditorMenu",
+      "oldNamespace": "HeliosDebugger.Editor",
+      "newNamespace": "Astra.Helios.Editor",
+      "oldAssembly": "HeliosDebugger.Editor",
+      "newAssembly": "Astra.Helios.Editor",
+      "path": "Editor/HeliosDebuggerBuildValidator.cs"
+    },
+    {
+      "type": "HeliosDebuggerBuildValidator",
+      "oldNamespace": "HeliosDebugger.Editor",
+      "newNamespace": "Astra.Helios.Editor",
+      "oldAssembly": "HeliosDebugger.Editor",
+      "newAssembly": "Astra.Helios.Editor",
+      "path": "Editor/HeliosDebuggerBuildValidator.cs"
+    },
+    {
+      "type": "HeliosOptionsCatalogGenerator",
+      "oldNamespace": "HeliosDebugger.Editor",
+      "newNamespace": "Astra.Helios.Editor",
+      "oldAssembly": "HeliosDebugger.Editor",
+      "newAssembly": "Astra.Helios.Editor",
+      "path": "Editor/HeliosOptionsCatalogGenerator.cs"
+    },
+    {
+      "type": "HeliosPinSetupWindow",
+      "oldNamespace": "HeliosDebugger.Editor",
+      "newNamespace": "Astra.Helios.Editor",
+      "oldAssembly": "HeliosDebugger.Editor",
+      "newAssembly": "Astra.Helios.Editor",
+      "path": "Editor/HeliosPinSetupWindow.cs"
+    },
+    {
+      "type": "HeliosTextMeshProResources",
+      "oldNamespace": "HeliosDebugger.Editor",
+      "newNamespace": "Astra.Helios.Editor",
+      "oldAssembly": "HeliosDebugger.Editor",
+      "newAssembly": "Astra.Helios.Editor",
+      "path": "Editor/HeliosTextMeshProResources.cs"
+    },
+    {
+      "type": "HeliosAccessController",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosAccess.cs"
+    },
+    {
+      "type": "HeliosPinAccessPolicy",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosAccess.cs"
+    },
+    {
+      "type": "HeliosDenyAllAccessPolicy",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosAccess.cs"
+    },
+    {
+      "type": "HeliosAllowAllAccessPolicy",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosAccess.cs"
+    },
+    {
+      "type": "IHeliosChallengeAccessPolicy",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosAccess.cs"
+    },
+    {
+      "type": "IHeliosAccessPolicy",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosAccess.cs"
+    },
+    {
+      "type": "HeliosAccessRequest",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosAccess.cs"
+    },
+    {
+      "type": "HeliosAccessDecision",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosAccess.cs"
+    },
+    {
+      "type": "HeliosAccessOperation",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosAccess.cs"
+    },
+    {
+      "type": "HeliosBootstrapPolicy",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosBootstrapPolicy.cs"
+    },
+    {
+      "type": "HeliosProfilerSampler",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosConsoleProfiler.cs"
+    },
+    {
+      "type": "HeliosProfilerSample",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosConsoleProfiler.cs"
+    },
+    {
+      "type": "HeliosLogStore",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosConsoleProfiler.cs"
+    },
+    {
+      "type": "HeliosLogEntry",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosConsoleProfiler.cs"
+    },
+    {
+      "type": "HeliosLogLevel",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosConsoleProfiler.cs"
+    },
+    {
+      "type": "HeliosActionResult",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosCore.cs"
+    },
+    {
+      "type": "HeliosActionDefinition",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosCore.cs"
+    },
+    {
+      "type": "HeliosTabBase",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosCore.cs"
+    },
+    {
+      "type": "IHeliosTabOpenHandler",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosCore.cs"
+    },
+    {
+      "type": "IHeliosTabProvider",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosCore.cs"
+    },
+    {
+      "type": "IHeliosTab",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosCore.cs"
+    },
+    {
+      "type": "HeliosContext",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosCore.cs"
+    },
+    {
+      "type": "HeliosService",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosCore.cs"
+    },
+    {
+      "type": "Helios",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosCore.cs"
+    },
+    {
+      "type": "HeliosDynamicOptionContainer",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosDynamicOptions.cs"
+    },
+    {
+      "type": "HeliosDynamicActionDefinition",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosDynamicOptions.cs"
+    },
+    {
+      "type": "HeliosOptionDefinition",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosDynamicOptions.cs"
+    },
+    {
+      "type": "HeliosOptionDefinition",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosDynamicOptions.cs"
+    },
+    {
+      "type": "IHeliosOptionContainer",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosDynamicOptions.cs"
+    },
+    {
+      "type": "IHeliosActionOption",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosDynamicOptions.cs"
+    },
+    {
+      "type": "IHeliosValueOption",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosDynamicOptions.cs"
+    },
+    {
+      "type": "HeliosLogQuery",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosLogQuery.cs"
+    },
+    {
+      "type": "HeliosLogViewEntry",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosLogQuery.cs"
+    },
+    {
+      "type": "HeliosLogFilter",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosLogQuery.cs"
+    },
+    {
+      "type": "HeliosLogLevelMask",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosLogQuery.cs"
+    },
+    {
+      "type": "HeliosOptionValueConverter",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosOptionValueConverter.cs"
+    },
+    {
+      "type": "HeliosActionParameter",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosOptions.cs"
+    },
+    {
+      "type": "HeliosReflectedAction",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosOptions.cs"
+    },
+    {
+      "type": "HeliosOptionMember",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosOptions.cs"
+    },
+    {
+      "type": "HeliosOptionsRegistry",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosOptions.cs"
+    },
+    {
+      "type": "HeliosOptionValueKind",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosOptions.cs"
+    },
+    {
+      "type": "HeliosGeneratedOptions",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosOptionsDiscovery.cs"
+    },
+    {
+      "type": "HeliosReportService",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosReporting.cs"
+    },
+    {
+      "type": "HeliosDefaultSystemInfoProvider",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosReporting.cs"
+    },
+    {
+      "type": "HeliosSystemInfoRegistry",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosReporting.cs"
+    },
+    {
+      "type": "IHeliosSystemInfoProvider",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosReporting.cs"
+    },
+    {
+      "type": "HeliosSerializablePair",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosSettings.cs"
+    },
+    {
+      "type": "HeliosDebuggerSettings",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosSettings.cs"
+    },
+    {
+      "type": "HeliosCanvasPlacement",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosSettings.cs"
+    },
+    {
+      "type": "HeliosTriggerActivation",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosSettings.cs"
+    },
+    {
+      "type": "HeliosTriggerCorner",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosSettings.cs"
+    },
+    {
+      "type": "HeliosThemeProfile",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/HeliosThemeProfile.cs"
+    },
+    {
+      "type": "HeliosWebhookArtifactPayload",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosBuiltInReportTransports.cs"
+    },
+    {
+      "type": "HeliosWebhookPayload",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosBuiltInReportTransports.cs"
+    },
+    {
+      "type": "HeliosWebhookReportTransport",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosBuiltInReportTransports.cs"
+    },
+    {
+      "type": "HeliosLocalReportTransport",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosBuiltInReportTransports.cs"
+    },
+    {
+      "type": "HeliosNativeShareReportTransport",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosNativeShareReportTransport.cs"
+    },
+    {
+      "type": "HeliosNativeShareProviderRegistry",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosNativeShareReportTransport.cs"
+    },
+    {
+      "type": "IHeliosNativeShareProvider",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosNativeShareReportTransport.cs"
+    },
+    {
+      "type": "HeliosReportBuilder",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosReportBuilder.cs"
+    },
+    {
+      "type": "HeliosUnityScreenshotProvider",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosReportBuilder.cs"
+    },
+    {
+      "type": "IHeliosScreenshotProvider",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosReportBuilder.cs"
+    },
+    {
+      "type": "HeliosReportMaterializer",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosReportMaterializer.cs"
+    },
+    {
+      "type": "HeliosMaterializedReport",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosReportMaterializer.cs"
+    },
+    {
+      "type": "HeliosMaterializedArtifact",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosReportMaterializer.cs"
+    },
+    {
+      "type": "HeliosReportResult",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosReportModels.cs"
+    },
+    {
+      "type": "HeliosReportBundle",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosReportModels.cs"
+    },
+    {
+      "type": "HeliosReportArtifact",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosReportModels.cs"
+    },
+    {
+      "type": "HeliosTransportId",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosReportModels.cs"
+    },
+    {
+      "type": "HeliosReportCancellationSource",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosReportOperation.cs"
+    },
+    {
+      "type": "HeliosReportOperationContext",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosReportOperation.cs"
+    },
+    {
+      "type": "HeliosReportProgress",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosReportOperation.cs"
+    },
+    {
+      "type": "HeliosReportRedactor",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosReportRedactor.cs"
+    },
+    {
+      "type": "IHeliosReportRedactor",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosReportRedactor.cs"
+    },
+    {
+      "type": "HeliosTransportRegistry",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosTransportRegistry.cs"
+    },
+    {
+      "type": "IHeliosReportTransport",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Core/Reporting/HeliosTransportRegistry.cs"
+    },
+    {
+      "type": "HeliosDockedProfilerOverlay",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosBuiltInOverlays.cs"
+    },
+    {
+      "type": "HeliosDockedConsoleOverlay",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosBuiltInOverlays.cs"
+    },
+    {
+      "type": "HeliosPinnedOptionsOverlay",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosBuiltInOverlays.cs"
+    },
+    {
+      "type": "HeliosDebuggerRoot",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosDebuggerRoot.cs"
+    },
+    {
+      "type": "HeliosHoldTrigger",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosHoldTrigger.cs"
+    },
+    {
+      "type": "HeliosIcons",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosIcons.cs"
+    },
+    {
+      "type": "HeliosIconSet",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosIcons.cs"
+    },
+    {
+      "type": "IHeliosTabIcon",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosIcons.cs"
+    },
+    {
+      "type": "HeliosBuiltInOptionControls",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosOptionControls.cs"
+    },
+    {
+      "type": "IHeliosOptionControlBuilder",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosOptionControls.cs"
+    },
+    {
+      "type": "HeliosOptionControlContext",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosOptionControls.cs"
+    },
+    {
+      "type": "HeliosOverlayBase",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosOverlays.cs"
+    },
+    {
+      "type": "IHeliosOverlay",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosOverlays.cs"
+    },
+    {
+      "type": "HeliosOverlayContext",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosOverlays.cs"
+    },
+    {
+      "type": "HeliosShapeLibrary",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosShapeLibrary.cs"
+    },
+    {
+      "type": "IHeliosShortcut",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosShortcuts.cs"
+    },
+    {
+      "type": "HeliosShortcutContext",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosShortcuts.cs"
+    },
+    {
+      "type": "HeliosBugReporterTab",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosTabs.cs"
+    },
+    {
+      "type": "HeliosSystemInfoTab",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosTabs.cs"
+    },
+    {
+      "type": "HeliosOptionsTab",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosTabs.cs"
+    },
+    {
+      "type": "HeliosProfilerTab",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosTabs.cs"
+    },
+    {
+      "type": "HeliosConsoleTab",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosTabs.cs"
+    },
+    {
+      "type": "HeliosTimeSeriesGraph",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosTimeSeriesGraph.cs"
+    },
+    {
+      "type": "HeliosVirtualizedLogList",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosVirtualizedLogList.cs"
+    },
+    {
+      "type": "HeliosWidgetFactory",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosWidgetFactory.cs"
+    },
+    {
+      "type": "HeliosSwitchControl",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosWidgetFactory.cs"
+    },
+    {
+      "type": "HeliosButtonStyle",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Runtime",
+      "newAssembly": "Astra.Helios.Runtime",
+      "path": "Runtime/Unity/HeliosWidgetFactory.cs"
+    },
+    {
+      "type": "HeliosDebuggerDynamicExample",
+      "oldNamespace": "HeliosDebugger.Samples",
+      "newNamespace": "Astra.Helios.Samples",
+      "oldAssembly": null,
+      "newAssembly": null,
+      "path": "Samples~/HeliosDebuggerDynamicExample.cs"
+    },
+    {
+      "type": "HeliosDebuggerDynamicExampleGui",
+      "oldNamespace": "HeliosDebugger.Samples",
+      "newNamespace": "Astra.Helios.Samples",
+      "oldAssembly": null,
+      "newAssembly": null,
+      "path": "Samples~/HeliosDebuggerDynamicExampleGui.cs"
+    },
+    {
+      "type": "HeliosDebuggerExample",
+      "oldNamespace": "HeliosDebugger.Samples",
+      "newNamespace": "Astra.Helios.Samples",
+      "oldAssembly": null,
+      "newAssembly": null,
+      "path": "Samples~/HeliosDebuggerExample.cs"
+    },
+    {
+      "type": "HeliosAccessTests",
+      "oldNamespace": "HeliosDebugger.Tests",
+      "newNamespace": "Astra.Helios.Tests",
+      "oldAssembly": "HeliosDebugger.EditMode.Tests",
+      "newAssembly": "Astra.Helios.Tests.EditMode",
+      "path": "Tests/EditMode/HeliosAccessTests.cs"
+    },
+    {
+      "type": "HeliosLifecycleTests",
+      "oldNamespace": "HeliosDebugger.Tests",
+      "newNamespace": "Astra.Helios.Tests",
+      "oldAssembly": "HeliosDebugger.EditMode.Tests",
+      "newAssembly": "Astra.Helios.Tests.EditMode",
+      "path": "Tests/EditMode/HeliosLifecycleTests.cs"
+    },
+    {
+      "type": "HeliosLogStoreTests",
+      "oldNamespace": "HeliosDebugger.Tests",
+      "newNamespace": "Astra.Helios.Tests",
+      "oldAssembly": "HeliosDebugger.EditMode.Tests",
+      "newAssembly": "Astra.Helios.Tests.EditMode",
+      "path": "Tests/EditMode/HeliosLogStoreTests.cs"
+    },
+    {
+      "type": "HeliosOptionReadTests",
+      "oldNamespace": "HeliosDebugger.Tests",
+      "newNamespace": "Astra.Helios.Tests",
+      "oldAssembly": "HeliosDebugger.EditMode.Tests",
+      "newAssembly": "Astra.Helios.Tests.EditMode",
+      "path": "Tests/EditMode/HeliosOptionReadTests.cs"
+    },
+    {
+      "type": "HeliosOptionValueConverterTests",
+      "oldNamespace": "HeliosDebugger.Tests",
+      "newNamespace": "Astra.Helios.Tests",
+      "oldAssembly": "HeliosDebugger.EditMode.Tests",
+      "newAssembly": "Astra.Helios.Tests.EditMode",
+      "path": "Tests/EditMode/HeliosOptionValueConverterTests.cs"
+    },
+    {
+      "type": "HeliosOptionsCatalogTests",
+      "oldNamespace": "HeliosDebugger.Tests",
+      "newNamespace": "Astra.Helios.Tests",
+      "oldAssembly": "HeliosDebugger.EditMode.Tests",
+      "newAssembly": "Astra.Helios.Tests.EditMode",
+      "path": "Tests/EditMode/HeliosOptionsCatalogTests.cs"
+    },
+    {
+      "type": "HeliosReportingTests",
+      "oldNamespace": "HeliosDebugger.Tests",
+      "newNamespace": "Astra.Helios.Tests",
+      "oldAssembly": "HeliosDebugger.EditMode.Tests",
+      "newAssembly": "Astra.Helios.Tests.EditMode",
+      "path": "Tests/EditMode/HeliosReportingTests.cs"
+    },
+    {
+      "type": "HeliosTabProviderTests",
+      "oldNamespace": "HeliosDebugger.Tests",
+      "newNamespace": "Astra.Helios.Tests",
+      "oldAssembly": "HeliosDebugger.EditMode.Tests",
+      "newAssembly": "Astra.Helios.Tests.EditMode",
+      "path": "Tests/EditMode/HeliosTabProviderTests.cs"
+    },
+    {
+      "type": "HeliosInteractionTests",
+      "oldNamespace": "HeliosDebugger.Tests",
+      "newNamespace": "Astra.Helios.Tests",
+      "oldAssembly": "HeliosDebugger.PlayMode.Tests",
+      "newAssembly": "Astra.Helios.Tests.PlayMode",
+      "path": "Tests/PlayMode/HeliosInteractionTests.cs"
+    },
+    {
+      "type": "HeliosLogQueryTests",
+      "oldNamespace": "HeliosDebugger.Tests",
+      "newNamespace": "Astra.Helios.Tests",
+      "oldAssembly": "HeliosDebugger.PlayMode.Tests",
+      "newAssembly": "Astra.Helios.Tests.PlayMode",
+      "path": "Tests/PlayMode/HeliosLogQueryTests.cs"
+    },
+    {
+      "type": "HeliosRootLifecycleTests",
+      "oldNamespace": "HeliosDebugger.Tests",
+      "newNamespace": "Astra.Helios.Tests",
+      "oldAssembly": "HeliosDebugger.PlayMode.Tests",
+      "newAssembly": "Astra.Helios.Tests.PlayMode",
+      "path": "Tests/PlayMode/HeliosRootLifecycleTests.cs"
+    },
+    {
+      "type": "HeliosTabProviderPlayModeTests",
+      "oldNamespace": "HeliosDebugger.Tests",
+      "newNamespace": "Astra.Helios.Tests",
+      "oldAssembly": "HeliosDebugger.PlayMode.Tests",
+      "newAssembly": "Astra.Helios.Tests.PlayMode",
+      "path": "Tests/PlayMode/HeliosTabProviderPlayModeTests.cs"
+    }
+  ],
+  "engineFreeAnnotations": [
+    {
+      "type": "HeliosRangeAttribute",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Annotations",
+      "newAssembly": "Astra.Helios.Annotations",
+      "path": "Runtime/Annotations/HeliosAttributes.cs"
+    },
+    {
+      "type": "HeliosActionAttribute",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Annotations",
+      "newAssembly": "Astra.Helios.Annotations",
+      "path": "Runtime/Annotations/HeliosAttributes.cs"
+    },
+    {
+      "type": "HeliosOptionAttribute",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Annotations",
+      "newAssembly": "Astra.Helios.Annotations",
+      "path": "Runtime/Annotations/HeliosAttributes.cs"
+    },
+    {
+      "type": "HeliosOptionsAttribute",
+      "oldNamespace": "HeliosDebugger",
+      "newNamespace": "Astra.Helios",
+      "oldAssembly": "HeliosDebugger.Annotations",
+      "newAssembly": "Astra.Helios.Annotations",
+      "path": "Runtime/Annotations/HeliosAttributes.cs"
+    }
+  ],
+  "stableTypeIdentities": [
+    "HeliosDebugger.DOTween.HeliosDOTweenTab",
+    "HeliosDebugger.HeliosBugReporterTab",
+    "HeliosDebugger.HeliosSystemInfoTab",
+    "HeliosDebugger.HeliosOptionsTab",
+    "HeliosDebugger.HeliosProfilerTab",
+    "HeliosDebugger.HeliosConsoleTab",
+    "HeliosDebugger.Samples.HeliosDebuggerExample"
+  ]
+}

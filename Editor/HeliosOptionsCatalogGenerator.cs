@@ -8,8 +8,9 @@ using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEditor.Compilation;
 
-namespace HeliosDebugger.Editor
+namespace Astra.Helios.Editor
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger.Editor", "HeliosDebugger.Editor")]
     public static class HeliosOptionsCatalogGenerator
     {
         private const string DirectoryPath = "Assets/HeliosDebuggerGenerated";
@@ -71,7 +72,7 @@ namespace HeliosDebugger.Editor
             for (int i = 0; i < types.Count; i++)
             {
                 string qualifiedName = EscapeCSharp(types[i].AssemblyQualifiedName);
-                builder.Append("        HeliosDebugger.HeliosGeneratedOptions.Register(Type.GetType(\"")
+                builder.Append("        global::Astra.Helios.HeliosGeneratedOptions.Register(Type.GetType(\"")
                     .Append(qualifiedName)
                     .AppendLine("\", false));");
             }

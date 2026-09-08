@@ -1,7 +1,8 @@
 using UnityEngine;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     [CreateAssetMenu(fileName = "HeliosDebuggerTheme", menuName = "Astra/Helios/Theme")]
     public sealed class HeliosThemeProfile : ScriptableObject
     {

@@ -5,8 +5,9 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosLocalReportTransport : IHeliosReportTransport
     {
         private readonly HeliosReportMaterializer _materializer;
@@ -75,6 +76,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosWebhookReportTransport : IHeliosReportTransport
     {
         private string _endpoint;
@@ -255,6 +257,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     [Serializable]
     public sealed class HeliosWebhookPayload
     {
@@ -290,6 +293,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     [Serializable]
     public sealed class HeliosWebhookArtifactPayload
     {

@@ -2,8 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public interface IHeliosReportTransport
     {
         HeliosTransportId Id { get; }
@@ -18,6 +19,7 @@ namespace HeliosDebugger
             Action<HeliosReportResult> complete);
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosTransportRegistry
     {
         private readonly Dictionary<HeliosTransportId, IHeliosReportTransport> _byId =

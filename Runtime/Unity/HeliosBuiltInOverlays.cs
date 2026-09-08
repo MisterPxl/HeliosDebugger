@@ -3,8 +3,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosPinnedOptionsOverlay : HeliosOverlayBase
     {
         private GameObject _bar;
@@ -152,6 +153,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosDockedConsoleOverlay : HeliosOverlayBase
     {
         private readonly HeliosLogFilter _filter = new HeliosLogFilter();
@@ -211,6 +213,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosDockedProfilerOverlay : HeliosOverlayBase
     {
         private TextMeshProUGUI _text;

@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public interface IHeliosValueOption
     {
         string Category { get; }
@@ -24,6 +25,7 @@ namespace HeliosDebugger
         void CycleEnum();
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public interface IHeliosActionOption
     {
         string Category { get; }
@@ -36,6 +38,7 @@ namespace HeliosDebugger
         HeliosActionResult Invoke(IReadOnlyList<string> parameterValues);
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public interface IHeliosOptionContainer
     {
         IEnumerable<IHeliosValueOption> GetOptions();
@@ -47,6 +50,7 @@ namespace HeliosDebugger
         event Action<IHeliosActionOption> ActionRemoved;
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public static class HeliosOptionDefinition
     {
         public static HeliosOptionDefinition<T> Create<T>(
@@ -70,6 +74,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosOptionDefinition<T> : IHeliosValueOption
     {
         private readonly Func<T> _getter;
@@ -224,6 +229,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosDynamicActionDefinition : IHeliosActionOption
     {
         private static readonly HeliosActionParameter[] NoParameters = new HeliosActionParameter[0];
@@ -271,6 +277,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosDynamicOptionContainer : IHeliosOptionContainer
     {
         private readonly List<IHeliosValueOption> _options = new List<IHeliosValueOption>();

@@ -5,8 +5,9 @@ using System.IO;
 using System.Text;
 using UnityEngine;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public interface IHeliosScreenshotProvider
     {
         IEnumerator Capture(
@@ -14,6 +15,7 @@ namespace HeliosDebugger
             Action<HeliosReportArtifact, Exception> complete);
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosUnityScreenshotProvider : IHeliosScreenshotProvider
     {
         public const int DefaultMaxDimension = 1920;
@@ -103,6 +105,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosReportBuilder
     {
         private static readonly UTF8Encoding Utf8 = new UTF8Encoding(false);

@@ -7,8 +7,9 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     [DefaultExecutionOrder(-9000)]
     public sealed class HeliosDebuggerRoot : MonoBehaviour
     {

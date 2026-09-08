@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace HeliosDebugger
+namespace Astra.Helios
 {
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     [Flags]
     public enum HeliosLogLevelMask
     {
@@ -16,6 +17,7 @@ namespace HeliosDebugger
         All = Log | Warning | Error | Exception | Assert
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosLogFilter
     {
         public HeliosLogLevelMask Levels { get; set; } = HeliosLogLevelMask.All;
@@ -33,6 +35,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosLogViewEntry
     {
         public HeliosLogViewEntry(HeliosLogEntry representative)
@@ -51,6 +54,7 @@ namespace HeliosDebugger
         }
     }
 
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, "HeliosDebugger", "HeliosDebugger.Runtime")]
     public sealed class HeliosLogQuery
     {
         private readonly HeliosLogStore _store;

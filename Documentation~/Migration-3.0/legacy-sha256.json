@@ -1,0 +1,16 @@
+{
+  "helios-migration-baseline.json": "565b85664551f326787a19ceb947ea807714d3da9691f9771721c96ba43a1706",
+  "Assets/HeliosMigrationFixture.meta": "47bed02e711225a078740ba5ec62964a39f106e9018bb935886465b8b76be092",
+  "Assets/Resources/HeliosDebuggerSettings.asset": "62c0f480ab3ba52af196a1647b128789d60510f2cb4957b966f92564d41e03c1",
+  "Assets/Resources/HeliosDebuggerSettings.asset.meta": "82b6c95168eaba9b56ccad6285dee54cc7ef5b53a515c1f2e9a5303540846657",
+  "Assets/HeliosMigrationFixture/Graph.asset": "9c4d04417908df8371d897b18611cb02d3a0c52b73430524fab5af42768cbc80",
+  "Assets/HeliosMigrationFixture/Theme.asset": "3da9eda05e6c4cf484a98a0a7b18858c5abb07e4ae3098de06d4a8094f3db557",
+  "Assets/HeliosMigrationFixture/Graph.asset.meta": "975f4f933e4c8c1476b628abd2437a34317fb354a10e23eca3919ca81bc13813",
+  "Assets/HeliosMigrationFixture/Theme.asset.meta": "db43d42713ad7f39687229ed0a2563d00f6c12103e31a345cf23e81d2bd00897",
+  "Assets/HeliosDebuggerGenerated/link.xml.meta": "e8d2e9eb8f23bba22b93a64ab2bff91e0b843199e517f4036f54ff4846f83c65",
+  "Assets/HeliosDebuggerGenerated/link.xml": "857bc4941867c1eb844ddd6cb100a121ab22b619a3b3ab3620475e9d550762ef",
+  "Assets/HeliosDebuggerGenerated/HeliosGeneratedOptionsCatalog.g.cs.meta": "8d81cf3fa9ac748ba898ca97e0301e73d9ca186ed9e5b03f36ab16b059e9e945",
+  "Assets/HeliosDebuggerGenerated/HeliosGeneratedOptionsCatalog.g.cs": "74cb0067244b16a2f72f0f6f428ce3c097336cbdc7df96bf23afea14980466be",
+  "Assets/Editor/Migration/HeliosMigrationFixture.cs.meta": "f65a8af7d09ce06e3a36189845e2264172fef31d867eff9f4eed47cf942bc1b8",
+  "Assets/Editor/Migration/Astra.Helios.MigrationProbe.asmdef.meta": "f1e756beed97d07a4e869d037ffad3905474bd212de6c97cdab2edcdff83bcd9"
+}
