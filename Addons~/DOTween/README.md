@@ -9,6 +9,13 @@ Optional runtime `Tweens` tab for DOTween Free. The base
 `com.misterpxl.helios-debugger` package has no DOTween dependency and continues
 to compile without this integration.
 
+Other integrations can describe where a live tween was authored by registering an
+`IDOTweenSourceProvider` with `DOTweenSourceProviders.Register` (the returned handle
+unregisters). Snapshots then carry a `Source` (owner, asset, step, diagnostic count),
+shown in the tab's detail line and searchable. Without a provider the tab behaves as
+before. The Valkyrie DOTween integration ships such a provider; this package does not
+depend on Valkyrie.
+
 ## Requirements
 
 1. Install DOTween Free separately.

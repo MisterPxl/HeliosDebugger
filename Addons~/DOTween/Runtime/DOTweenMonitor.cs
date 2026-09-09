@@ -123,6 +123,7 @@ namespace Astra.Helios.Integrations.DOTween
                 string tweenType = tween.GetType().Name;
                 TweenHandle handle = GetOrCreateHandle(tween, idText, targetText, tweenType, duration);
                 _activeHandles.Add(handle.Id);
+                DOTweenSourceProviders.TryDescribe(tween, out DOTweenTweenSource source);
                 snapshots.Add(new DOTweenTweenSnapshot(
                     handle.Id,
                     true,
@@ -134,7 +135,8 @@ namespace Astra.Helios.Integrations.DOTween
                     elapsed,
                     duration,
                     progress,
-                    tween.CompletedLoops()));
+                    tween.CompletedLoops(),
+                    source));
             }
         }
 

@@ -489,7 +489,8 @@ namespace Astra.Helios.Integrations.DOTween
             row.Title.text = $"{tween.Id}  |  {tween.Target}  |  {tween.TweenType}";
             row.Detail.text =
                 $"{FormatTime(tween.Elapsed)} / {FormatTime(tween.Duration)}  " +
-                $"{Mathf.Clamp01(tween.Progress):P0}  |  loops {tween.CompletedLoops}";
+                $"{Mathf.Clamp01(tween.Progress):P0}  |  loops {tween.CompletedLoops}" +
+                (tween.Source != null ? $"  |  {tween.Source.Summary}" : string.Empty);
             row.Fill.rectTransform.anchorMax = new Vector2(Mathf.Clamp01(tween.Progress), 1f);
             row.Fill.rectTransform.offsetMax = Vector2.zero;
             if (row.PlayPauseLabel != null)
