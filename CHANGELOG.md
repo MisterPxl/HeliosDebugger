@@ -4,15 +4,13 @@ All notable changes to the Helios Debugger package are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the package adheres to [Semantic Versioning](https://semver.org/).
 
-## 3.0.0 — migration candidate (unreleased)
+## [3.0.0] - 2026-09-09
 
 - Move namespaces and nine base/integration assemblies to Astra.Helios.
 - Preserve metadata and serialized identities with MovedFrom; keep settings paths and preference keys.
 - Add engine-free HeliosTypeIdentityAttribute for stable tab IDs and persisted option owner identities.
 - Regenerate options catalogs/linker descriptors with new type names; retain an obsolete generated-call relay and reject stale catalogs at build time.
 - Qualify legacy settings, theme, shared/cyclic managed references, preferences, tests and a macOS Mono Development build.
-
-## [Unreleased]
 
 ### Added
 

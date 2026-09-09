@@ -2,19 +2,17 @@
 
 All notable changes to the Helios Debugger DOTween addon are documented here.
 
-## Unreleased
+## [2.1.0] - 2026-09-09
 
 - Add `IDOTweenSourceProvider` / `DOTweenSourceProviders`: optional providers describe the
   authoring source of an observed tween (owner, asset, step, diagnostics). Snapshots expose
   `Source`, the tab shows it and the search matches it. No behaviour change without a provider.
 
-## 2.0.0 — migration candidate (unreleased)
+## [2.0.0] - 2026-09-09
 
 - Target Helios 3.x and rename namespaces/assemblies to Astra.Helios.Integrations.DOTween.
 - Preserve the Tweens tab identity and script/assembly metadata.
 - Keep DOTween and Helios compile constraints aligned across runtime and tests.
-
-## [Unreleased]
 
 ### Changed
 

@@ -1,6 +1,6 @@
 {
   "name": "com.misterpxl.helios-debugger.dotween",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "displayName": "Astra Helios — DOTween Integration",
   "description": "Optional Helios Debugger runtime tab for inspecting and controlling DOTween Free tweens.",
   "unity": "6000.0",
